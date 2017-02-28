@@ -20,11 +20,11 @@ def get_selection(size):
     valid = False
     while not valid:
         try:
-        	choice = int(input(SELECT))
-        	if choice not in range(1, size + 1):
-        		raise ValueError
+            choice = int(input(SELECT))
+            if choice not in range(1, size + 1):
+            	raise ValueError
         except ValueError:
-        	print("Selection must be a number from 1 to %d." % (size))
-        	valid = False
+            print("Selection must be a number from 1 to %d." % (size))
+            valid = False
         else:
-        	return choice
+            return choice
