@@ -16,14 +16,12 @@ def get_connection(filename):
 
     """
     file = open(filename)
-    username = file.readline()
-    password = file.readline()
+    username = file.readline().rstrip('\n')
+    password = file.readline().rstrip('\n')
     file.close()
 
-    connStr = "%s/%s@gwynne.cs.ualberta.ca:1521:CRS"
-
     try:
-        return cx_Oracle.connect(connStr % (username, password))
+        return cx_Oracle.connect(username, password, "gwynne.cs.ualberta.ca:1521/CRS")
     except cx_Oracle.DatabaseError as exc:
         error, = exc.args
         print(sys.stderr, "Oracle code:", error.code)
