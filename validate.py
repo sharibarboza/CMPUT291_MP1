@@ -3,7 +3,7 @@
 def validate_str(prompt, length=None):
     """
     Used for when user needs to input words
-   	length (optional) restricts the number of characters
+    length (optional): restricts the number of characters
 	commonly used for validating input for new insert values	
     """
     valid = False
@@ -23,8 +23,8 @@ def validate_num(prompt, size=None):
     """
     Used for when user needs to input a single number 
     Used mainly for menu selections
-	size (optional) is for specifying a range of numbers
-    based on the number of available selections
+    size (optional): is for specifying a range of numbers based on the number of 
+    available selections
     """
     valid = False
     choice = None

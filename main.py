@@ -11,7 +11,6 @@ def get_user(conn):
     choice = validate_num(SELECT, size=len(choices))
 
     username = None
-
     if choice == 1:
     	username = login(conn)
     elif choice == 2:
@@ -35,23 +34,47 @@ def login(conn):
     row = curs.fetchone()
 
     if row is None:
-    	print("Username and/or password is not valid.\n")
-    	return None
+        print("Username and/or password not valid.\n")
+        username = None	
     else:
     	print("Welcome back, %s." % (row[2].rstrip()))
-    	return username
 
     return username
 
 def signup(conn):
     print(BORDER)
     name = validate_str("Enter your name: ", 20)
-    email = validate_str("Enter your email: ",15)
-    city = validate_str("Enter your city: ",12)
+    email = validate_str("Enter your email: ", 15)
+    city = validate_str("Enter your city: ", 12)
     timezone = validate_num("Enter your timezone: ")
-    password = validate_str("Enter your password: ",4)
+    password = validate_str("Enter your password: ", 4)
 
-    return ""
+    username = get_new_user(conn)
+    print("Welcome %s!\n" % (name))
+
+    data = [username, password, name, email, city, timezone]
+    cursInsert = conn.cursor()
+    cursInsert.execute("INSERT INTO users(usr,pwd,name,email,city,timezone)"
+        "VALUES (:1,:2,:3,:4,:5,:6)", data)
+    conn.commit()
+ 
+    return username 
+
+def get_new_user(conn):
+    curs = conn.cursor()
+    curs.execute('SELECT usr FROM users')
+    rows = curs.fetchall()
+    new_usr = len(rows) + 1
+    
+    while user_exists(new_usr, curs): 
+        new_usr += 1
+    
+    return new_usr
+
+def user_exists(user, curs):
+    curs.execute('SELECT usr FROM users WHERE usr=:1', [user])
+    return curs.fetchone() is not None 
+
 
 # ----------------------------------- MAIN --------------------------------------
 
@@ -63,4 +86,4 @@ def main():
     username = get_user(conn)
 
 if __name__ == "__main__":
-	main()
+    main()
