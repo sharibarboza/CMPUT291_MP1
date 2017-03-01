@@ -5,7 +5,17 @@ from constants import BORDER, SELECT
 from utils import display_selections
 from validate import validate_num, validate_str
 
+from queries import (
+		insert_user,
+		get_user,
+		user_exists
+	)
+
 def get_user(conn):
+	"""
+	Gets the id of the logged in user
+	Will be from an existing user or a newly signed-up user
+	"""
     choices = ["Login", "Sign up", "Exit"]
     display_selections(choices)
     choice = validate_num(SELECT, size=len(choices))
@@ -24,14 +34,15 @@ def get_user(conn):
     	get_user(conn)
 
 def login(conn):
+	"""
+	Allows returning user to sign in
+	"""
     print(BORDER)
     username = validate_num("Enter username: ")
     password = input("Enter password: ")
 
     curs = conn.cursor()
-    named_params = {'u': username, 'p': password}
-    curs.execute('SELECT * FROM users WHERE usr=:u AND pwd=:p', named_params)
-    row = curs.fetchone()
+    row = get_user(curs, username, password)
 
     if row is None:
         print("Username and/or password not valid.\n")
@@ -42,6 +53,9 @@ def login(conn):
     return username
 
 def signup(conn):
+	"""
+	Creates a new user
+	"""
     print(BORDER)
     name = validate_str("Enter your name: ", 20)
     email = validate_str("Enter your email: ", 15)
@@ -53,28 +67,23 @@ def signup(conn):
     print("Welcome %s!\n" % (name))
 
     data = [username, password, name, email, city, timezone]
-    cursInsert = conn.cursor()
-    cursInsert.execute("INSERT INTO users(usr,pwd,name,email,city,timezone)"
-        "VALUES (:1,:2,:3,:4,:5,:6)", data)
-    conn.commit()
- 
+    insert_user(conn, data)
+
     return username 
 
 def get_new_user(conn):
+	"""
+	Generates a new unique user id
+	"""
     curs = conn.cursor()
-    curs.execute('SELECT usr FROM users')
+    curs.execute('SELECT * FROM users')
     rows = curs.fetchall()
     new_usr = len(rows) + 1
     
-    while user_exists(new_usr, curs): 
+    while user_exists(curs, new_usr): 
         new_usr += 1
     
     return new_usr
-
-def user_exists(user, curs):
-    curs.execute('SELECT usr FROM users WHERE usr=:1', [user])
-    return curs.fetchone() is not None 
-
 
 # ----------------------------------- MAIN --------------------------------------
 
