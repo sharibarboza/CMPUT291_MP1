@@ -1,5 +1,3 @@
-from constants import SELECT
-
 # Input validation methods
 
 def validate_str(prompt):
@@ -12,7 +10,7 @@ def validate_str(prompt):
     	usr_input = input(prompt)
     return usr_input
 
-def validate_num(size):
+def validate_num(prompt, size=None):
     """
     Used for when user needs to input a single number 
     Used mainly for menu selections
@@ -20,11 +18,14 @@ def validate_num(size):
     valid = False
     while not valid:
         try:
-            choice = int(input(SELECT))
-            if choice not in range(1, size + 1):
+            choice = int(input(prompt))
+            if size and choice not in range(1, size + 1):
             	raise ValueError
         except ValueError:
-            print("Selection must be a number from 1 to %d." % (size))
-            valid = False
+        	if size:
+        		print("Selection must be a number from 1 to %d." % (size))
+        	else:
+        		print("Please enter a number.")
+        	valid = False
         else:
             return choice
