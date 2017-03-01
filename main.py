@@ -2,20 +2,23 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
-from utils import display_selections
-from validate import validate_num, validate_str
+from utils import (
+    display_selections,
+    validate_str,
+    validate_num
+) 
 
 from queries import (
-		insert_user,
-		get_user,
-		user_exists
-	)
+    insert_user,
+    get_user,
+    user_exists
+)
 
 def get_user(conn):
-	"""
-	Gets the id of the logged in user
-	Will be from an existing user or a newly signed-up user
-	"""
+    """
+    Gets the id of the logged in user
+    Will be from an existing user or a newly signed-up user
+    """
     choices = ["Login", "Sign up", "Exit"]
     display_selections(choices)
     choice = validate_num(SELECT, size=len(choices))
@@ -34,9 +37,9 @@ def get_user(conn):
     	get_user(conn)
 
 def login(conn):
-	"""
-	Allows returning user to sign in
-	"""
+    """
+    Allows returning user to sign in
+    """
     print(BORDER)
     username = validate_num("Enter username: ")
     password = input("Enter password: ")
@@ -53,9 +56,9 @@ def login(conn):
     return username
 
 def signup(conn):
-	"""
-	Creates a new user
-	"""
+    """
+    Creates a new user
+    """
     print(BORDER)
     name = validate_str("Enter your name: ", 20)
     email = validate_str("Enter your email: ", 15)
@@ -72,9 +75,9 @@ def signup(conn):
     return username 
 
 def get_new_user(conn):
-	"""
-	Generates a new unique user id
-	"""
+    """
+    Generates a new unique user id
+    """
     curs = conn.cursor()
     curs.execute('SELECT * FROM users')
     rows = curs.fetchall()
