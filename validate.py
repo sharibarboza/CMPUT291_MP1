@@ -3,23 +3,32 @@
 def validate_str(prompt, length=None):
     """
     Used for when user needs to input words
-    Ensures that user input is non-empty
+   	length (optional) restricts the number of characters
+	commonly used for validating input for new insert values	
     """
     valid = False
+    usr_input = None
+
     while not valid:
     	usr_input = input(prompt)
     	if length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
     	else:
-            return usr_input
+            valid = True
+
+    return usr_input 
 
 def validate_num(prompt, size=None):
     """
     Used for when user needs to input a single number 
     Used mainly for menu selections
+	size (optional) is for specifying a range of numbers
+    based on the number of available selections
     """
     valid = False
+    choice = None
+
     while not valid:
         try:
             choice = int(input(prompt))
@@ -32,4 +41,6 @@ def validate_num(prompt, size=None):
             	print("Please enter a number.")
             valid = False
         else:
-            return choice
+            valid = True
+
+    return choice 
