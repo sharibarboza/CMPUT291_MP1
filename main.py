@@ -14,7 +14,9 @@ def get_user(conn):
 
     if choice == 1:
     	username = login(conn)
-    elif choice == 3:
+    elif choice == 2:
+    	username = signup(conn)
+    else:
         sys.exit()
 
     if username:
@@ -40,6 +42,16 @@ def login(conn):
     	return username
 
     return username
+
+def signup(conn):
+    print(BORDER)
+    name = validate_str("Enter your name: ", 20)
+    email = validate_str("Enter your email: ",15)
+    city = validate_str("Enter your city: ",12)
+    timezone = validate_num("Enter your timezone: ")
+    password = validate_str("Enter your password: ",4)
+
+    return ""
 
 # ----------------------------------- MAIN --------------------------------------
 

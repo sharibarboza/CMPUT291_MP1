@@ -9,10 +9,10 @@ def validate_str(prompt, length=None):
     while not valid:
     	usr_input = input(prompt)
     	if length and len(usr_input) > length:
-    		print("Input must be %d characters or less." % (length))
-    		valid = False
+            print("Input must be %d characters or less." % (length))
+            valid = False
     	else:
-    		return usr_input
+            return usr_input
 
 def validate_num(prompt, size=None):
     """
