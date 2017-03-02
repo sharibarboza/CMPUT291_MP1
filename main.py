@@ -2,6 +2,7 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
+
 from utils import (
     display_selections,
     validate_str,
@@ -11,10 +12,11 @@ from utils import (
 from queries import (
     insert_user,
     get_user,
-    user_exists
+    user_exists,
+    select
 )
 
-def get_user(conn):
+def start_up(conn):
     """
     Gets the id of the logged in user
     Will be from an existing user or a newly signed-up user
@@ -34,7 +36,7 @@ def get_user(conn):
     if username:
     	return username
     else:
-    	get_user(conn)
+    	start_up(conn)
 
 def login(conn):
     """
@@ -79,7 +81,7 @@ def get_new_user(conn):
     Generates a new unique user id
     """
     curs = conn.cursor()
-    curs.execute('SELECT * FROM users')
+    select(curs, 'users')
     rows = curs.fetchall()
     new_usr = len(rows) + 1
     
@@ -95,7 +97,7 @@ def main():
     conn = get_connection("sql_login.txt")
 
     # Opening screen
-    username = get_user(conn)
+    logged_user = start_up(conn)
 
 if __name__ == "__main__":
     main()
