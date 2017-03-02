@@ -19,7 +19,7 @@ def validate_str(prompt, length=None):
 
     while not valid:
         usr_input = input(prompt)
-        in length and len(usr_input) > length:
+        if length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
         else:
