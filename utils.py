@@ -1,6 +1,10 @@
+from datetime import datetime
+
 from constants import BORDER
 
-# Util methods 
+# Util methods
+def convert_date(date_obj):
+    return datetime.strftime(date_obj, "%b %d %Y")
 
 def display_selections(selections):
     print(BORDER)

@@ -2,6 +2,7 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
+from tweet import TweetSearch
 
 from utils import (
     display_selections,
@@ -53,7 +54,9 @@ def login(conn):
         print("Username and/or password not valid.\n")
         username = None	
     else:
-    	print("Welcome back, %s." % (row[2].rstrip()))
+    	name = row[2].rstrip()
+    	first_name = name.split()[0]
+    	print("Welcome back, %s." % (first_name))
 
     return username
 
@@ -98,6 +101,9 @@ def main():
 
     # Opening screen
     logged_user = start_up(conn)
+
+    # Display user's opening screen
+    user_tweets = TweetSearch(conn, logged_user)
 
 if __name__ == "__main__":
     main()
