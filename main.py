@@ -22,9 +22,11 @@ class Session:
     def __init__(self, conn):
         self.conn = conn
         self.username = None
-        self.user_tweets = None
 
-    def start_up(self):
+        self._start_up()
+        self.user_tweets = TweetSearch(self.conn, self.username)
+
+    def _start_up(self):
         """
         Gets the id of the logged in user
         Will be from an existing user or a newly signed-up user
@@ -39,8 +41,6 @@ class Session:
     	    self.signup()
         else:
             sys.exit()
-
-        self.user_tweets = TweetSearch(self.conn, self.username)
 
     def login(self):
         """
@@ -132,7 +132,6 @@ def main():
     s = Session(conn)
 
     # Opening screen
-    s.start_up() 
     s.home()
 
 if __name__ == "__main__":
