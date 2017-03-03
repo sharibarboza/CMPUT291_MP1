@@ -1,8 +1,4 @@
-<<<<<<< HEAD
--- Revised by Sharidan Barbza Feb 28, 2017
-=======
 -- Revised by Sharidan Barboza Feb 28, 2017
->>>>>>> sharibarboza
 -- Data prepared by Laura Petrich, llorrain@ualberta.ca
 -- Some tweet text transferred from @science on twitter.com
 -- Published on Feb 4, 2017
