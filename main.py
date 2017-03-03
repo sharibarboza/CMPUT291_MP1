@@ -61,7 +61,7 @@ class Session:
     	    print("Welcome back, %s." % (first_name))
 
         if self.username is None:
-            self.start_up()
+            self._start_up()
 
     def signup(self):
         """
