@@ -61,7 +61,7 @@ class Session:
     	    print("Welcome back, %s." % (first_name))
 
         if self.username is None:
-            self.start_up()
+            self._start_up()
 
     def signup(self):
         """
@@ -96,32 +96,54 @@ class Session:
     def home(self):
         """
         Displays 5 tweets from users who are being followed
-        Displays the main functionality menu
         """
         print(BORDER)
         curs = self.user_tweets.get_user_tweets()
-        return main_menu(curs)
+        choices = self._main_menu(curs)
+
+        choice = validate_num(SELECT, size=len(choices)) 
+
+        """
+        if choice == 1:
+            search_tweets()
+        elif choice == 2:
+            search_users()
+        elif choice == 3:
+            compose_tweet()
+        elif choice == 4:
+            get_followers()
+        elif choice == 5:
+            manage_lists()
+        elif choice == 6:
+            logout()
+        elif choice == 7:
+            select_tweet()
+        elif choice == 8:
+            more_tweets()
+        """
        
+    def _main_menu(self, curs):
+        """
+        Displays the main functionality menu for the home screen
+        """
+        choices = [
+            "Search tweets",
+            "Search users",
+            "Compose tweet",
+            "List followers",
+            "Manage lists",
+            "Logout"
+        ]
 
-def main_menu(curs):
-    choices = [
-        "Search tweets",
-        "Search users",
-        "Compose tweet",
-        "List followers",
-        "Manage lists",
-        "Logout"
-    ]
+        if curs:
+            choices.append("Select a tweet")
+            rows = curs.fetchmany(5)
 
-    if curs:
-        choices.insert(0, "Select a tweet")
-        rows = curs.fetchmany(5)
+            if (len(rows) > 0):
+                choices.append("See more tweets")
 
-        if (len(rows) > 0):
-            choices.insert(1, "See more tweets")
-
-    display_selections(choices)
-    return validate_num(SELECT, size=len(choices)) 
+        display_selections(choices)
+        return choices
 
 
 # ----------------------------------- MAIN --------------------------------------
