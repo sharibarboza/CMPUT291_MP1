@@ -151,7 +151,13 @@ class Session:
         return choices
 
     def logout(self, curs):
-        curs.close()
+        """
+        Close cursors and connections
+        Exit program
+        """
+        if curs:
+            curs.close()
+
         self.conn.close()
         sys.exit()
         
