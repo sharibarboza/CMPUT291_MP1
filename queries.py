@@ -98,7 +98,7 @@ def insert_include(conn, data_list):
 
 # -------------------------- SPECIFIC SELECT QUERIES --------------------------------
 
-def get_user(curs, username, password):
+def find_user(curs, username, password):
     """
     Returns the tuple of a specific user from the database
     param curs: cursor object
@@ -137,7 +137,54 @@ def follows_tweets(curs, user):
 
 def get_name(curs, user):
     """
-    Gets the name of the specified user
+    Gets a specific user
     """
     curs.execute('select name from users where usr=:1', [user])
     return curs.fetchone()[0].rstrip()
+
+def get_user_from_tid(curs, tid):
+    """
+    Gets the name of the writer of a specified tweet
+    """
+    curs.execute('select usr from users, tweets where tid=:1 '
+        'and writer = usr', [tid])
+    return curs.fetchone()[0]
+
+def get_text_from_tid(curs, tid):
+    """
+    Gets the text from the specified tweet
+    """
+    curs.execute('select text from tweets where tid=:1', [tid])
+    return curs.fetchone()[0].rstrip()
+
+def create_tStat(curs):
+    """
+    Create view tStat to return statistics about a tweet including
+    tid, writer, tdate, text, retweet count, reply count, and 
+    mention count
+    """
+    curs.execute('drop view tStat')
+    curs.execute('create view tStat (tid, writer, tdate, text, rep_cnt, '
+        'ret_cnt, sim_cnt) as select t.tid, t.writer, t.tdate, t.text, '
+        'count(distinct t2.tid), count(distinct rt.usr), count(distinct m2.tid) '
+        'from (((tweets t left outer join tweets t2 on t.writer = t2.replyto) '
+        'left outer join retweets rt on t.tid = rt.tid) '
+        'left outer join mentions m on t.tid = m.tid) '
+        'left outer join mentions m2 on m.term = m2.term '
+        'group by t.tid, t.writer, t.tdate, t.text')
+
+def get_rep_cnt(curs, tid):
+    """
+    Get the reply count of a specific tweet
+    param: tid - tweet id
+    """
+    curs.execute('select rep_cnt from tStat where tid=:1', [tid])
+    return curs.fetchone()
+
+def get_ret_cnt(curs, tid):
+    """
+    Get the retweetn count of a specific tweet
+    param: tid - tweet id
+    """
+    curs.execute('select ret_cnt from tStat where tid=:1', [tid])
+    return curs.fetchone()
