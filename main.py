@@ -67,20 +67,19 @@ class Session:
         """
         Creates a new user
         """
-        print(BORDER)
         name = validate_str("Enter your name: ", 20)
         email = validate_str("Enter your email: ", 15)
         city = validate_str("Enter your city: ", 12)
         timezone = validate_num("Enter your timezone: ")
         password = validate_str("Enter your password: ", 4)
 
-        self.username = get_new_user(self.conn)
+        self.username = self.generate_user()
         print("Welcome %s!\n" % (name))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
 
-    def get_new_user(self):
+    def generate_user(self):
         """
         Generates a new unique user id
         """
@@ -95,15 +94,18 @@ class Session:
         return new_usr
 
     def home(self):
+        """
+        Displays 5 tweets from users who are being followed
+        Displays the main functionality menu
+        """
         print(BORDER)
         curs = self.user_tweets.get_user_tweets()
         return main_menu(curs)
        
 
 def main_menu(curs):
-    rows = curs.fetchmany(5)
+    rows = [] 
     choices = [
-        "Select tweet",
         "Search tweets",
         "Search users",
         "Compose tweet",
@@ -111,6 +113,10 @@ def main_menu(curs):
         "Manage lists",
         "Logout"
     ]
+
+    if curs:
+        choices.insert(0, "Select a tweet")
+        rows = curs.fetchmany(5)
 
     if (len(rows) > 0):
         choices.insert(1, "See more tweets")

@@ -5,7 +5,6 @@ from utils import (
 )
 
 from queries import follows_tweets, get_name
-from constants import BORDER, SELECT
 
 class TweetSearch:
 
@@ -19,7 +18,11 @@ class TweetSearch:
 
         rows = curs.fetchmany(5)
         self.display_tweets(rows)
-        return curs 
+       
+        if len(rows) > 0:
+            return curs
+        else:
+            return None 
 
     def display_tweets(self, rows):
         for i, row in enumerate(rows, 1):
@@ -41,6 +44,9 @@ class TweetSearch:
 
             print("%s @%d - %s" % (writer_name, t_writer, t_date))
             print("%s\n" % (t_text))
+
+        if len(rows) == 0:
+            print("You have no tweets yet.")
 
 
 
