@@ -104,7 +104,6 @@ class Session:
        
 
 def main_menu(curs):
-    rows = [] 
     choices = [
         "Search tweets",
         "Search users",
@@ -118,8 +117,8 @@ def main_menu(curs):
         choices.insert(0, "Select a tweet")
         rows = curs.fetchmany(5)
 
-    if (len(rows) > 0):
-        choices.insert(1, "See more tweets")
+        if (len(rows) > 0):
+            choices.insert(1, "See more tweets")
 
     display_selections(choices)
     return validate_num(SELECT, size=len(choices)) 
