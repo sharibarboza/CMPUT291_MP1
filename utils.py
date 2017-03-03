@@ -4,9 +4,17 @@ from constants import BORDER
 
 # Util methods
 def convert_date(date_obj):
+    """
+    Convert a datetime.datetime object from a query into a string
+    """
     return datetime.strftime(date_obj, "%b %d %Y")
 
 def display_selections(selections):
+    """
+    Helper method for easily displaying menus
+    param selections: A list containing each menu item
+    No need to include numbers in list
+    """
     print(BORDER)
     for i, choice in enumerate(selections, 1):
     	print("%d. %s" % (i, choice))
