@@ -1,76 +1,67 @@
-from utils import (
-    convert_date, 
-    display_selections,
-    validate_num,
-)
-
+from utils import convert_date, display_selections, validate_num
 from constants import SELECT
-from queries import follows_tweets, get_name
+
+from queries import (
+    follows_tweets,
+    get_name,
+    get_user_from_tid,
+    get_text_from_tid,
+    get_rep_cnt,
+    get_ret_cnt
+)
 
 class Tweet:
 
     def __init__(self, row, conn):
-        self.__id = row[0]
-        self.__writer = row[1]
-        self.__date = row[2]
-        self.__text = row[3]
-        self.__replyto = row[4]
-        self.__rt = row[5]
-        self.__date_str = convert_date(self.__date)
+        self.curs = conn.cursor()
+        self.id = row[0]
+        self.writer = row[1]
+        self.writer_name = get_name(self.curs, self.writer)
+        self.date = row[2]
+        self.text = row[3]
+        self.replyto = row[4]
+        self.rt = row[5]
+        
+        self.date_str = convert_date(self.date)
+        self.rep_cnt = get_rep_cnt(self.curs, self.id)
+        self.ret_cnt = get_ret_cnt(self.curs, self.id)
 
-        nameCurs = conn.cursor()
-        self.__writer_name = get_name(nameCurs, self.__writer)
-        self.__rt_name = get_name(nameCurs, self.__rt)
-        nameCurs.close()
+        if self.replyto:
+            self.reply_usr = get_user_from_tid(self.curs, self.replyto)
+            self.reply_name = get_name(self.curs, self.reply_usr)
+            self.reply_text = get_text_from_tid(self.curs, self.replyto)
 
-    @property
-    def writer(self):
-        return self.__writer
-
-    @property
-    def date(self):
-        return self.__date
-
-    @property
-    def text(self):
-        return self.__text
-
-    @property
-    def replyto(self):
-        return self.__replyto
-
-    @property
-    def rt(self):
-        return self.__rt
-
-    @property
-    def date_str(self):
-        return self.__date_str
+        if self.rt:
+            self.rt_name = get_name(self.curs, self.rt)
 
     def display(self, i):
         print("Tweet %d" % (i))
 
         # Indicate retweet
         if self.is_retweet():
-            print("%s Retweeted" % (self.__rt_name))
+            print("%s Retweeted" % (self.rt_name))
 
-        print("%s @%d - %s" % (self.__writer_name, self.__writer, self.__date_str))
-        print("%s\n" % (self.__text))
+        print("%s @%d - %s" % (self.writer_name, self.writer, self.date_str))
+        print("%s\n" % (self.text))
 
     def display_stats(self):
         print("\nTweet Statistics\n")
-        print("Tweet id: %d" % (self.__id))
-        print("Written by: %s @%d" % (self.__writer_name, self.__writer))
-        print("Posted: %s" % (self.__date_str))
-        print("Text: %s" % (self.__text))
+        print("Tweet id: %d" % (self.id))
+        print("Written by: %s @%d" % (self.writer_name, self.writer))
+        print("Posted: %s" % (self.date_str))
+        print("Text: %s" % (self.text))
 
-        if (self.__replyto):
-            print("Reply to: %s @%d" % (self.__rt_name, self.__rt))
+        if (self.replyto):
+            print("Reply to: %s (%s @%d)" % (self.reply_text, self.reply_name, self.reply_usr))
         else:
             print("Reply to: None")
 
+        print("Number of replies: %s" % (self.rep_cnt))
+        print("Number of retweets: %s" % (self.ret_cnt))
+
+
     def is_retweet(self):
-        return self.__writer != self.__rt
+        return self.writer != self.rt
 
 
 class TweetSearch:
