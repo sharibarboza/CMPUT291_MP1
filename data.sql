@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 -- Revised by Sharidan Barbza Feb 28, 2017
+=======
+-- Revised by Sharidan Barboza Feb 28, 2017
+>>>>>>> sharibarboza
 -- Data prepared by Laura Petrich, llorrain@ualberta.ca
 -- Some tweet text transferred from @science on twitter.com
 -- Published on Feb 4, 2017
@@ -756,7 +760,11 @@ insert into retweets values (5,13,'14-JAN-2017');
 insert into retweets values (3,7,'02-FEB-2017');
 insert into retweets values (188,3,'03-FEB-2017');
 insert into retweets values (133,10,'24-JAN-2017');
+<<<<<<< HEAD
 insert into retweets values (37,53,'20-JUL-2016');
+=======
+insert into retweets values (37,52,'20-JUL-2016');
+>>>>>>> sharibarboza
 insert into retweets values (99,54,'23-JAN-2017');
 insert into retweets values (11,54,'24-JAN-2017');
 insert into retweets values (162,52,'20-JAN-2017');
@@ -765,7 +773,11 @@ insert into retweets values (211,13,'17-JAN-2017');
 insert into retweets values (2,16,'5-JAN-2015');
 insert into retweets values (193,18,'20-JUN-2015');
 insert into retweets values (37,18,'20-JUN-2015');
+<<<<<<< HEAD
 insert into retweets values (1,25,'31-DEC-2016');
+=======
+insert into retweets values (1,24,'31-DEC-2016');
+>>>>>>> sharibarboza
 insert into retweets values (99,25,'31-DEC-2016');
 insert into retweets values (06,25,'31-DEC-2016');
 insert into retweets values (208,25,'31-DEC-2016');
