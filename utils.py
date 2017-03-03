@@ -3,6 +3,15 @@ from datetime import datetime
 from constants import BORDER
 
 # Util methods
+def add_main_menu(choices_list):
+    """
+    Adds the rest of the main functionality menu to the current
+    menu list
+    Appends to list in place
+    """
+    main_list = ["Compose new tweet", "List followers", "Manage lists", "Logout"]
+    choices_list.extend(main_list) 
+
 def convert_date(date_obj):
     """
     Convert a datetime.datetime object from a query into a string
