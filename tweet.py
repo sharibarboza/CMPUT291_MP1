@@ -2,11 +2,9 @@ from utils import (
     convert_date, 
     display_selections,
     validate_num,
-    add_main_menu
 )
 
 from queries import follows_tweets, get_name
-from constants import BORDER, SELECT
 
 class TweetSearch:
 
@@ -14,16 +12,17 @@ class TweetSearch:
         self.conn = conn
         self.user = user
 
-        if user:
-            self.get_user_tweets()
-
     def get_user_tweets(self):
         curs = self.conn.cursor()
         follows_tweets(curs, self.user)
 
         rows = curs.fetchmany(5)
         self.display_tweets(rows)
-        self.get_option(curs)
+       
+        if len(rows) > 0:
+            return curs
+        else:
+            return None 
 
     def display_tweets(self, rows):
         for i, row in enumerate(rows, 1):
@@ -46,19 +45,8 @@ class TweetSearch:
             print("%s @%d - %s" % (writer_name, t_writer, t_date))
             print("%s\n" % (t_text))
 
-    def get_option(self, curs):
-        rows = curs.fetchmany(5)
-        choices = ["Select tweet"]
-
-        if (len(rows) > 0):
-            choices.insert(1, "See more tweets")
-
-        add_main_menu(choices)
-        display_selections(choices)
-        choice = validate_num(SELECT, size=len(choices))
-
-
-
+        if len(rows) == 0:
+            print("You have no tweets yet.")
 
 
 
