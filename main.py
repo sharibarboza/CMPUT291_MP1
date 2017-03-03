@@ -24,7 +24,7 @@ class Session:
         self.username = None
 
         self._start_up()
-        self.user_tweets = TweetSearch(self.conn, self.username)
+        self.tweets = TweetSearch(self.conn, self.username)
 
     def _start_up(self):
         """
@@ -98,7 +98,7 @@ class Session:
         Displays 5 tweets from users who are being followed
         """
         print(BORDER)
-        curs = self.user_tweets.get_user_tweets()
+        curs = self.tweets.get_user_tweets()
         choices = self._main_menu(curs)
 
         choice = validate_num(SELECT, size=len(choices)) 
@@ -115,12 +115,17 @@ class Session:
         elif choice == 5:
             manage_lists()
         elif choice == 6:
-            logout()
+            logout(curs)
         elif choice == 7:
-            select_tweet()
+            select_tweet(curs)
         elif choice == 8:
             more_tweets()
         """
+
+        if choice == 6:
+            self.logout(curs)
+        elif choice == 7:
+            self.tweets.select_tweet()
        
     def _main_menu(self, curs):
         """
@@ -145,6 +150,11 @@ class Session:
         display_selections(choices)
         return choices
 
+    def logout(self, curs):
+        curs.close()
+        self.conn.close()
+        sys.exit()
+        
 
 # ----------------------------------- MAIN --------------------------------------
 
