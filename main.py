@@ -2,34 +2,40 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
-from tweet import TweetSearch
+from utils import display_selections, validate_str, validate_num
+from queries import insert_user, find_user, user_exists, select, create_tStat
+from tweet import TweetSearch, compose_tweet
 
-from utils import (
-    display_selections,
-    validate_str,
-    validate_num
-) 
-
-from queries import (
-    insert_user,
-    get_user,
-    user_exists,
-    select
-)
+"""
+CMPUT 291 Mini Project 1
+Contributors: Hong Zhou, Haotian Zhu, Sharidan Barboza
+Due: March 12 5 PM
+"""
 
 class Session:
 
-    def __init__(self, conn):
-        self.conn = conn
-        self.username = None
+    def __init__(self):
+        """Establishes a connection with cx_Oracle and logs in user"""
+ 
+        self.username = None	    
+        self.conn = get_connection("sql_login.txt")
+        self.curs = self.conn.cursor()
+        
+    def get_conn(self):
+        """Return the connection"""
+        return self.conn
 
-        self._start_up()
-        self.user_tweets = TweetSearch(self.conn, self.username)
+    def get_curs(self):
+        """Return the cursor"""
+        return self.curs
 
-    def _start_up(self):
-        """
-        Gets the id of the logged in user
-        Will be from an existing user or a newly signed-up user
+    def get_username(self):
+        """Return the logged in user id"""
+        return self.username
+
+    def start_up(self):
+        """Displays start up screen to provide options for both
+        registered and unregistered users 
         """
         choices = ["Login", "Sign up", "Exit"]
         display_selections(choices)
@@ -43,14 +49,12 @@ class Session:
             sys.exit()
 
     def login(self):
-        """
-        Allows returning user to sign in
+        """Allows returning user to sign in. Will return to the start
+        up screen if login fails
         """
         self.username = validate_num("Enter username: ")
         password = input("Enter password: ")
-
-        curs = self.conn.cursor()
-        row = get_user(curs, self.username, password)
+        row = find_user(self.curs, self.username, password)
 
         if row is None:
             print("Username and/or password not valid.\n")
@@ -63,76 +67,110 @@ class Session:
         if self.username is None:
             self._start_up()
 
+    def logout(self):
+        """Logs user out of the system. Closes all cursors/connections"""
+        self.curs.close()
+        self.conn.close()
+        print("Logged out.")
+
     def signup(self):
-        """
-        Creates a new user
-        """
+        """Creates a new user and inserts user into the database"""
+        self.username = self.generate_user()
         name = validate_str("Enter your name: ", 20)
         email = validate_str("Enter your email: ", 15)
         city = validate_str("Enter your city: ", 12)
         timezone = validate_num("Enter your timezone: ")
         password = validate_str("Enter your password: ", 4)
 
-        self.username = self.generate_user()
-        print("Welcome %s!\n" % (name))
+        print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
 
     def generate_user(self):
-        """
-        Generates a new unique user id
-        """
-        curs = self.conn.cursor()
-        select(curs, 'users')
-        rows = curs.fetchall()
+        """Generates a new unique user id for user sign-up"""
+        select(self.curs, 'users')
+        rows = self.curs.fetchall()
         new_usr = len(rows) + 1
     
-        while user_exists(curs, new_usr): 
+        while user_exists(self.curs, new_usr): 
             new_usr += 1
-    
         return new_usr
 
-    def home(self):
-        """
-        Displays 5 tweets from users who are being followed
-        Displays the main functionality menu
-        """
-        print(BORDER)
-        curs = self.user_tweets.get_user_tweets()
-        return main_menu(curs)
-       
-
 def main_menu(curs):
+    """Displays the main functionality menu
+    
+    :param curs: cursor object
+    """
     choices = [
-        "Search tweets",
-        "Search users",
-        "Compose tweet",
-        "List followers",
+        "Search tweets", 
+        "Search users", 
+        "Compose tweet", 
+        "List followers", 
         "Manage lists",
         "Logout"
     ]
 
+    # Allow tweet selection if user has any tweets
     if curs:
-        choices.insert(0, "Select a tweet")
+        choices.append("Select a tweet")
+
         rows = curs.fetchmany(5)
-
-        if (len(rows) > 0):
-            choices.insert(1, "See more tweets")
-
+        if len(rows) > 0:
+            choices.append("See more tweets")
+    
     display_selections(choices)
-    return validate_num(SELECT, size=len(choices)) 
+    return choices
 
-
+   
 # ----------------------------------- MAIN --------------------------------------
 
 def main():
-    # Connect to database
-    conn = get_connection("sql_login.txt")
-    s = Session(conn)
+    # Log in/sign up user into database
+    session = Session()
+    session.start_up()
+    conn = session.get_conn()
 
-    # Opening screen
-    s.home()
+    # Get the users's opening screen tweets
+    user = session.get_username()
+    tweets = TweetSearch(conn, user)
+    create_tStat(session.get_curs())
+
+    # Display main system functionalities menu
+    choice = 0
+    while choice != 6:
+        print(BORDER)
+        curs = tweets.get_user_tweets()
+        choices = main_menu(curs)
+        choice = validate_num(SELECT, size=len(choices)) 
+
+        """
+        Main outline for program
+        if choice == 1:
+            search_tweets()
+        elif choice == 2:
+            search_users()
+        elif choice == 3:
+            compose_tweet()
+        elif choice == 4:
+            get_followers()
+        elif choice == 5:
+            manage_lists()
+        elif choice == 7:
+            select_tweet(curs)
+        elif choice == 8:
+            more_tweets()
+        """
+
+        # Currently operating functionalties
+        if choice == 3:
+            compose_tweet(conn, user)
+        elif choice == 7:
+            choice = tweets.select_tweet()
+
+    # Log out of the database system
+    session.logout()
+    main()
 
 if __name__ == "__main__":
     main()
