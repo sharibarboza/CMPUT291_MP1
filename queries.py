@@ -59,8 +59,8 @@ def insert_mention(conn, data_list):
     :param data_list: list of tid, term values
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into mentions(tid,term)"
-	    "values(:1,:2)", data_list)
+    cursInsert.execute("insert into mentions(tid,term) values(:1,:2)",
+        data_list)
     conn.commit()
 
     return cursInsert
@@ -72,8 +72,8 @@ def insert_retweet(conn, data_list):
     :param data_list: list of usr, tid, rdate values
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into retweets(usr,tid,rdate)"
-	    "values(:1,:2,:3)", data_list)
+    cursInsert.execute("insert into retweets(usr,tid,rdate) values(:1,:2,:3)", 
+        data_list)
     conn.commit()
 
     return cursInsert
@@ -85,8 +85,8 @@ def insert_list(conn, data_list):
     :param data_list: list of lname, owner values
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into lists(lname,owner)"
-	    "values(:1,:2)", data_list)
+    cursInsert.execute("insert into lists(lname,owner) values(:1,:2)",
+        data_list)
     conn.commit()
 
     return cursInsert
@@ -98,8 +98,8 @@ def insert_include(conn, data_list):
     :param data_list: list of lname, member values
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into includes(lname,member)"
-	    "values(:1,:2)", data_list)
+    cursInsert.execute("insert into includes(lname,member) values(:1,:2)",
+        data_list)
     conn.commit()
 
     return cursInsert
