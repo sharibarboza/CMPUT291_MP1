@@ -4,10 +4,12 @@ from utils import (
     convert_date, 
     display_selections, 
     validate_num,
-    validate_yn
+    validate_yn,
+    press_enter
 )
 
 from queries import (
+    select,
     follows_tweets,
     get_name,
     get_user_from_tid,
@@ -15,25 +17,62 @@ from queries import (
     get_rep_cnt,
     get_ret_cnt,
     insert_retweet,
-    already_retweeted
+    insert_tweet,
+    already_retweeted,
+    tid_exists
 )
+
+def compose_tweet(conn, user, replyto=None):
+    """
+    Generates a new tweet
+    """
+    text = input("Enter tweet: ")
+    writer = user
+    tid = generate_tid(conn)
+    date = TODAY
+    replyto = replyto
+    rt_user = None
+    data = [tid, writer, date, text, replyto, rt_user]
+    new_tweet = Tweet(conn, user, data)
+    new_tweet.display()
+
+    confirm = validate_yn("Confirm tweet? y/n: ")
+    if confirm in ["n", "no"]:
+        print("Tweet cancelled.")
+    else:
+        insert_tweet(conn, new_tweet.get_values())
+        print("Tweet %d created." % (new_tweet.id))
+
+
+def generate_tid(conn):
+    """
+    Generates a new unique tweet id
+    """
+    curs = conn.cursor()
+    select(curs, 'tweets')
+    rows = curs.fetchall()
+    new_tid = len(rows) + 1
+    
+    while tid_exists(curs, new_tid): 
+        new_tid += 1
+    
+    curs.close()
+    return new_tid
 
 class Tweet:
 
-    def __init__(self, row, conn):
+    def __init__(self, conn, user, data):
         self.conn = conn
         self.curs = conn.cursor()
-        self.id = row[0]
-        self.writer = row[1]
-        self.writer_name = get_name(self.curs, self.writer)
-        self.date = row[2]
-        self.text = row[3]
-        self.replyto = row[4]
-        self.rt_user = row[5]
+        self.user = user
 
-        self.date_str = convert_date(self.date)
-        self.rep_cnt = get_rep_cnt(self.curs, self.id)
-        self.ret_cnt = get_ret_cnt(self.curs, self.id)
+        # Tweet database values
+        self.id = data[0]
+        self.writer = data[1]
+        self.date = data[2]
+        self.text = data[3]
+        self.replyto = data[4]
+        self.rt_user = data[5]
 
         if self.replyto:
             self.reply_user = get_user_from_tid(self.curs, self.replyto)
@@ -42,6 +81,11 @@ class Tweet:
 
         if self.rt_user:
             self.rt_name = get_name(self.curs, self.rt_user)
+
+        self.date_str = convert_date(self.date)
+        self.rep_cnt = get_rep_cnt(self.curs, self.id)
+        self.ret_cnt = get_ret_cnt(self.curs, self.id)
+        self.writer_name = get_name(self.curs, self.writer)
 
     def display(self, user=None):
         if self.is_retweet(): 
@@ -68,29 +112,39 @@ class Tweet:
         print("Number of replies: %s" % (self.rep_cnt))
         print("Number of retweets: %s" % (self.ret_cnt))
 
-    def tweet_menu(self, user):
-        choices = ["Reply", "Retweet", "Home"]
+    def tweet_menu(self):
+        choices = ["Reply", "Retweet", "Home", "Logout"]
         display_selections(choices)
         choice = validate_num(SELECT, size=len(choices))
 
-        if choice == 2:
-            self.retweet(user)
+        if choice == 1:
+            compose_tweet(self.conn, self.user)
+        elif choice == 2:
+            self.retweet()
+        elif choice == 4:
+            choice = 6
+        return choice
 
-    def retweet(self, user):
-        if not already_retweeted(self.curs, user, self.id):
-            self.display(user)
-            choice = validate_yn("Confirm retweet? y/n: ")
-            if choice in ["n", "no"]:
-                print("Retweet cancelled.")
-            else:
-                print("Retweeted - %s" % (TODAY))
-                data_list = [user, self.id, TODAY]
-                insert_retweet(self.conn, data_list)
-        else:
+    def retweet(self):
+        if already_retweeted(self.curs, self.user, self.id):
             print("You already retweeted this tweet.")
+            return
+            
+        self.display(self.user)
+
+        confirm = validate_yn("Confirm retweet? y/n: ")
+        if confirm in ["n", "no"]:
+            print("Retweet cancelled.")
+        else:
+            print("Retweeted - %s" % (TODAY))
+            data_list = [user, self.id, TODAY]
+            insert_retweet(self.conn, data_list)
 
     def is_retweet(self):
-        return self.writer != self.rt_user
+        return self.rt_user is not None and self.writer != self.rt_user
+
+    def get_values(self):
+        return [self.id, self.writer, self.date, self.text, self.replyto]
 
 
 class TweetSearch:
@@ -116,7 +170,7 @@ class TweetSearch:
     def display_tweets(self):
         for i, row in enumerate(self.rows, 1):
             print("Tweet %d" % (i))
-            tweet = Tweet(row, self.conn)
+            tweet = Tweet(self.conn, self.user, data=row)
             self.tweets.append(tweet)
             tweet.display()
 
@@ -127,7 +181,12 @@ class TweetSearch:
         tweet_num = self.choose_tweet()
         tweet = self.tweets[tweet_num - 1]
         tweet.display_stats()
-        tweet.tweet_menu(self.user)
+
+        choice = 0
+        while choice < 3:
+            choice = tweet.tweet_menu()
+
+        return choice
 
     def choose_tweet(self):
         choices = []
@@ -137,7 +196,4 @@ class TweetSearch:
 
         display_selections(choices)
         return validate_num(SELECT, size=len(choices))
-
-
-
 

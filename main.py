@@ -2,7 +2,7 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
-from tweet import TweetSearch
+from tweet import TweetSearch, compose_tweet
 
 from utils import (
     display_selections,
@@ -12,19 +12,22 @@ from utils import (
 
 from queries import (
     insert_user,
-    get_user,
+    find_user,
     user_exists,
-    select
+    select,
+    create_tStat
 )
 
 class Session:
 
     def __init__(self, conn):
         self.conn = conn
+        self.curs = conn.cursor()
         self.username = None
 
         self._start_up()
         self.tweets = TweetSearch(self.conn, self.username)
+        create_tStat(self.conn.cursor())
 
     def _start_up(self):
         """
@@ -48,9 +51,7 @@ class Session:
         """
         self.username = validate_num("Enter username: ")
         password = input("Enter password: ")
-
-        curs = self.conn.cursor()
-        row = get_user(curs, self.username, password)
+        row = find_user(self.curs, self.username, password)
 
         if row is None:
             print("Username and/or password not valid.\n")
@@ -74,7 +75,7 @@ class Session:
         password = validate_str("Enter your password: ", 4)
 
         self.username = self.generate_user()
-        print("Welcome %s!\n" % (name))
+        print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
@@ -83,12 +84,11 @@ class Session:
         """
         Generates a new unique user id
         """
-        curs = self.conn.cursor()
-        select(curs, 'users')
-        rows = curs.fetchall()
+        select(self.curs, 'users')
+        rows = self.curs.fetchall()
         new_usr = len(rows) + 1
     
-        while user_exists(curs, new_usr): 
+        while user_exists(self.curs, new_usr): 
             new_usr += 1
     
         return new_usr
@@ -98,8 +98,8 @@ class Session:
         Displays 5 tweets from users who are being followed
         """
         print(BORDER)
-        curs = self.tweets.get_user_tweets()
-        choices = self._main_menu(curs)
+        self.curs = self.tweets.get_user_tweets()
+        choices = self._main_menu(self.curs)
 
         choice = validate_num(SELECT, size=len(choices)) 
 
@@ -114,18 +114,17 @@ class Session:
             get_followers()
         elif choice == 5:
             manage_lists()
-        elif choice == 6:
-            logout(curs)
         elif choice == 7:
             select_tweet(curs)
         elif choice == 8:
             more_tweets()
         """
-
-        if choice == 6:
-            self.logout(curs)
+        if choice == 3:
+            choice = compose_tweet(self.username)
         elif choice == 7:
-            self.tweets.select_tweet()
+            choice = self.tweets.select_tweet()
+
+        return choice
        
     def _main_menu(self, curs):
         """
@@ -150,16 +149,14 @@ class Session:
         display_selections(choices)
         return choices
 
-    def logout(self, curs):
+    def logout(self):
         """
         Close cursors and connections
         Exit program
         """
-        if curs:
-            curs.close()
-
+        self.curs.close()
         self.conn.close()
-        sys.exit()
+        print("Logged out.")
         
 
 # ----------------------------------- MAIN --------------------------------------
@@ -170,7 +167,11 @@ def main():
     s = Session(conn)
 
     # Opening screen
-    s.home()
+    choice = ""
+    while choice != 6:
+        choice = s.home()
+
+    s.logout()
 
 if __name__ == "__main__":
     main()
