@@ -200,14 +200,15 @@ class Tweet:
 
 class TweetSearch:
 
-    def __init__(self, conn, user):
+    def __init__(self, session, user):
         """Can be used for getting tweets of users being 
         followed or searching for specific tweets based on keywords
          
-        param conn: database session connection
+        param session: database session connection
         param user: logged in user id
         """ 
-        self.conn = conn 
+        self.session = session
+        self.conn = session.get_conn() 
         self.user = user
         self.tweets = []
 
@@ -261,8 +262,11 @@ class TweetSearch:
             if choice == 3:
                 choice = self.select_tweet() 
 
-        # Return 6 when user chooses to logout
-        return 6 if choice == 5 else choice 
+        if choice == 4:
+            self.session.home()
+        else:
+            self.session.logout()
+            
 
     def choose_tweet(self):
         """Returns the number of the tweet the user wants to select"""
