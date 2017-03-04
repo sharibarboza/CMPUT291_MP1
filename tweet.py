@@ -134,7 +134,7 @@ class Tweet:
 
         Returns the selected option from the tweet menu
         """
-        choices = ["Reply", "Retweet", "Home", "Logout"]
+        choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
         display_selections(choices)
         choice = validate_num(SELECT, size=len(choices))
 
@@ -142,6 +142,7 @@ class Tweet:
             compose_tweet(self.conn, self.user)
         elif choice == 2:
             self.retweet()
+            
         return choice
 
     def retweet(self):
@@ -253,10 +254,12 @@ class TweetSearch:
         tweet.display_stats()
 
         choice = 0
-        while choice < 3:
+        while choice < 4:
             choice = tweet.tweet_menu()
+            if choice == 3:
+                choice = self.select_tweet() 
 
-        if choice == 4:
+        if choice == 5:
             choice = 6
         return choice 
 
