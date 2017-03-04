@@ -26,8 +26,15 @@ class Session:
         self.username = None
 
         self._start_up()
-        self.tweets = TweetSearch(self, self.username)
-        create_tStat(self.conn.cursor())
+
+    def get_conn(self):
+        return self.conn
+
+    def get_curs(self):
+        return self.curs
+
+    def get_username(self):
+        return self.username
 
     def _start_up(self):
         """
@@ -44,9 +51,6 @@ class Session:
     	    self.signup()
         else:
             sys.exit()
-
-    def get_conn(self):
-        return self.conn
 
     def login(self):
         """
@@ -95,18 +99,61 @@ class Session:
             new_usr += 1
     
         return new_usr
+      
+    def logout(self):
+        """
+        Close cursors and connections
+        Exit program
+        """
+        self.curs.close()
+        self.conn.close()
+        print("Logged out.")
+        sys.exit()
 
-    def home(self):
-        """
-        Displays 5 tweets from users who are being followed
-        """
+
+def main_menu(curs):
+    """
+    Displays the main functionality menu for the home screen
+    """
+    choices = [
+        "Search tweets",
+        "Search users",
+        "Compose tweet",
+        "List followers",
+        "Manage lists",
+        "Logout"
+    ]
+
+    if curs:
+        choices.append("Select a tweet")
+        rows = curs.fetchmany(5)
+
+        if (len(rows) > 0):
+            choices.append("See more tweets")
+
+    display_selections(choices)
+    return choices
+
+   
+# ----------------------------------- MAIN --------------------------------------
+
+def main():
+    # Connect to database
+    conn = get_connection("sql_login.txt")
+    session = Session(conn)
+    tweets = TweetSearch(session, session.get_username())
+    create_tStat(session.get_curs())
+
+    choice = 0
+    while choice != 6:
         print(BORDER)
-        self.curs = self.tweets.get_user_tweets()
-        choices = self._main_menu(self.curs)
+        curs = tweets.get_user_tweets()
+        choices = main_menu(curs)
 
         choice = validate_num(SELECT, size=len(choices)) 
 
         """
+        Main outline for program
         if choice == 1:
             search_tweets()
         elif choice == 2:
@@ -123,59 +170,11 @@ class Session:
             more_tweets()
         """
         if choice == 3:
-            choice = compose_tweet(self.username)
+            compose_tweet(self.username)
         elif choice == 7:
-            choice = self.tweets.select_tweet()
+            tweets.select_tweet()
 
-        return choice
-       
-    def _main_menu(self, curs):
-        """
-        Displays the main functionality menu for the home screen
-        """
-        choices = [
-            "Search tweets",
-            "Search users",
-            "Compose tweet",
-            "List followers",
-            "Manage lists",
-            "Logout"
-        ]
-
-        if curs:
-            choices.append("Select a tweet")
-            rows = curs.fetchmany(5)
-
-            if (len(rows) > 0):
-                choices.append("See more tweets")
-
-        display_selections(choices)
-        return choices
-
-    def logout(self):
-        """
-        Close cursors and connections
-        Exit program
-        """
-        self.curs.close()
-        self.conn.close()
-        print("Logged out.")
-        sys.exit()
-        
-
-# ----------------------------------- MAIN --------------------------------------
-
-def main():
-    # Connect to database
-    conn = get_connection("sql_login.txt")
-    s = Session(conn)
-
-    # Opening screen
-    choice = ""
-    while choice != 6:
-        choice = s.home()
-
-    s.logout()
+    session.logout()
 
 if __name__ == "__main__":
     main()
