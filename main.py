@@ -24,7 +24,6 @@ class Session:
         self.conn = conn
         self.curs = conn.cursor()
         self.username = None
-
         self._start_up()
 
     def get_conn(self):
@@ -38,8 +37,8 @@ class Session:
 
     def _start_up(self):
         """
-        Gets the id of the logged in user
-        Will be from an existing user or a newly signed-up user
+        Displays start up screen to provide options for both
+        registered and unregistered users 
         """
         choices = ["Login", "Sign up", "Exit"]
         display_selections(choices)
@@ -54,7 +53,8 @@ class Session:
 
     def login(self):
         """
-        Allows returning user to sign in
+        Allows returning user to sign in. Will return to the start
+        up screen if login fails
         """
         self.username = validate_num("Enter username: ")
         password = input("Enter password: ")
@@ -73,7 +73,7 @@ class Session:
 
     def signup(self):
         """
-        Creates a new user
+        Creates a new user and inserts user into the database
         """
         name = validate_str("Enter your name: ", 20)
         email = validate_str("Enter your email: ", 15)
@@ -89,7 +89,7 @@ class Session:
 
     def generate_user(self):
         """
-        Generates a new unique user id
+        Generates a new unique user id for user sign-up
         """
         select(self.curs, 'users')
         rows = self.curs.fetchall()
@@ -102,8 +102,7 @@ class Session:
       
     def logout(self):
         """
-        Close cursors and connections
-        Exit program
+        Logs user out of the system. Closes all cursors/connections 
         """
         self.curs.close()
         self.conn.close()
@@ -113,13 +112,13 @@ class Session:
 
 def main_menu(curs):
     """
-    Displays the main functionality menu for the home screen
+    Displays the main functionality menu
     """
     choices = [
-        "Search tweets",
-        "Search users",
-        "Compose tweet",
-        "List followers",
+        "Search tweets", 
+        "Search users", 
+        "Compose tweet", 
+        "List followers", 
         "Manage lists",
         "Logout"
     ]
