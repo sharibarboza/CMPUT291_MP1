@@ -111,10 +111,35 @@ def find_user(curs, username, password):
 def user_exists(curs, user):
     """
     Checks if a user exists in the database
-    param curs: cursor object
     param user: user id (must be a number)
     """
     curs.execute('select usr from users where usr=:1', [user])
+    return curs.fetchone() is not None 
+
+def tid_exists(curs, tid):
+    """
+    Checks if a tweet id exists in the database
+    param tid: tweet id
+    """
+    curs.execute('select tid from tweets where tid=:1', [tid])
+    return curs.fetchone() is not None
+
+def hashtag_exists(curs, term):
+    """
+    Checks if a hashtag term exists in the database
+    param term: hashtag word
+    """
+    curs.execute('select term from hashtags where term=:1', [term])
+    return curs.fetchone() is not None
+
+def mention_exists(curs, tid, term):
+    """
+    Checks if a mention exists in the database
+    param tid: tweet id
+    param term: hashtag word
+    """
+    curs.execute('select term from mention where tid=:1 and term=:2',
+        [tid, term])
     return curs.fetchone() is not None 
 
 def select(curs, table):
