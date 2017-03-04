@@ -63,3 +63,21 @@ def validate_num(prompt, size=None):
             valid = True
 
     return choice
+
+def validate_yn(prompt):
+    """
+    Used for when prompting the user to enter either y or n
+    for yes or no questions
+    """
+    valid = False
+    choice = None
+    
+    while not valid:
+        choice = input(prompt).lower()
+        if choice not in ['y', 'n', 'yes', 'no']:
+            print("Enter either y/yes or n/no.")
+            valid = False
+        else:
+            valid = True
+
+    return choice
