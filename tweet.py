@@ -170,7 +170,7 @@ class Tweet:
         hashtags = self.find_hashtags()
         for tag in hashtags:
             term = self.extract_term(tag)
-            print(term) 
+           
             if not hashtag_exists(self.curs, term):
                 insert_hashtag(self.conn, term)     
             insert_mention(self.conn, [self.id, term])
@@ -198,11 +198,20 @@ class Tweet:
 class TweetSearch:
 
     def __init__(self, conn, user):
+        """
+        Can be used for getting tweets of users being followed or 
+        searching for specific tweets based on keywords
+        param conn: database connection
+        param user: logged in user id
+        """ 
         self.conn = conn 
         self.user = user
         self.tweets = []
 
     def get_user_tweets(self):
+        """
+        Find tweets/retweets from users are being followed
+        """
         curs = self.conn.cursor()
         follows_tweets(curs, self.user)
 
@@ -216,6 +225,9 @@ class TweetSearch:
             return None 
 
     def display_tweets(self):
+        """
+        Display resulting tweets 5 at a time ordered by date
+        """
         for i, row in enumerate(self.rows, 1):
             print("Tweet %d" % (i))
             tweet = Tweet(self.conn, self.user, data=row)
@@ -231,6 +243,9 @@ class TweetSearch:
             print("You have no tweets yet.")
 
     def select_tweet(self):
+        """
+        Prompt user to choose one of the displayed tweets
+        """
         tweet_num = self.choose_tweet()
         tweet = self.tweets[tweet_num - 1]
         tweet.display_stats()
@@ -244,6 +259,9 @@ class TweetSearch:
         return choice 
 
     def choose_tweet(self):
+        """
+        Get the number of the tweet the user wants to select
+        """
         choices = []
         for i, row in enumerate(self.rows, 1):
             tweet_str = "Tweet %d" % (i)
