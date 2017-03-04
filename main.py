@@ -4,7 +4,7 @@ from connect import get_connection
 from constants import BORDER, SELECT
 from utils import display_selections, validate_str, validate_num
 from queries import insert_user, find_user, user_exists, select, create_tStat
-from tweet import TweetSearch
+from tweet import TweetSearch, compose_tweet
 
 """
 CMPUT 291 Mini Project 1
@@ -14,16 +14,15 @@ Due: March 12 5 PM
 
 class Session:
 
-    def __init__(self, conn):
+    def __init__(self):
         """
-        Every session represents a single connection to the database
-        and a logged in user
+        Establishes a connection with cx_Oracle
+        A session represents a single user logged into the database 
         param: object returned from get_connection in main
         """
-        self.conn = conn
-        self.curs = conn.cursor()
+        self.conn = get_connection("sql_login.txt") 
+        self.curs = self.conn.cursor()
         self.username = None
-        self.start_up()
 
     def get_conn(self):
         """
@@ -86,7 +85,6 @@ class Session:
         self.curs.close()
         self.conn.close()
         print("Logged out.")
-        sys.exit()
 
     def signup(self):
         """
@@ -114,7 +112,6 @@ class Session:
     
         while user_exists(self.curs, new_usr): 
             new_usr += 1
-    
         return new_usr
 
 def main_menu(curs):
@@ -130,13 +127,14 @@ def main_menu(curs):
         "Logout"
     ]
 
+    # Allow tweet selection if user has any tweets
     if curs:
         choices.append("Select a tweet")
+
         rows = curs.fetchmany(5)
-
-        if (len(rows) > 0):
+        if len(rows) > 0:
             choices.append("See more tweets")
-
+    
     display_selections(choices)
     return choices
 
@@ -144,14 +142,14 @@ def main_menu(curs):
 # ----------------------------------- MAIN --------------------------------------
 
 def main():
-    # Establish connection with cx_Oracle 
-    conn = get_connection("sql_login.txt")
-
     # Log in/sign up user into database
-    session = Session(conn)
+    session = Session()
+    session.start_up()
+    conn = session.get_conn()
 
     # Get the users's opening screen tweets
-    tweets = TweetSearch(session, session.get_username())
+    user = session.get_username()
+    tweets = TweetSearch(conn, user)
     create_tStat(session.get_curs())
 
     # Display main system functionalities menu
@@ -182,12 +180,13 @@ def main():
 
         # Currently operating functionalties
         if choice == 3:
-            compose_tweet(self.username)
+            compose_tweet(conn, user)
         elif choice == 7:
-            tweets.select_tweet()
+            choice = tweets.select_tweet()
 
     # Log out of the database system
     session.logout()
+    main()
 
 if __name__ == "__main__":
     main()
