@@ -13,7 +13,7 @@ def convert_date(date_obj):
 def display_selections(selections):
     """Helper method for easily displaying numbered lists   
  
-    Pparam selections: A list containing each menu item
+    param selections: A list containing each menu item
     """
     print(BORDER)
     for i, choice in enumerate(selections, 1):
