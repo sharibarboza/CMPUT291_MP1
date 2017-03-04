@@ -177,48 +177,8 @@ def main():
     session = Session()
     session.start_up()
     conn = session.get_conn()
-<<<<<<< HEAD
-
-    # Get the users's opening screen tweets
-    user = session.get_username()
-    tweets = TweetSearch(conn, user)
-    create_tStat(session.get_curs())
-    tweetCurs = None
-
-    # Display main system functionalities menu
-    choice = 0
-    while choice != 6:
-        print(BORDER)
-        tweetCurs = tweets.get_user_tweets()
-        choices = main_menu(tweetCurs)
-        choice = validate_num(SELECT, size=len(choices)) 
-
-        """
-        Main outline for program
-        if choice == 1:
-            search_tweets()
-        elif choice == 2:
-            search_users()
-        elif choice == 3:
-            compose_tweet()
-        elif choice == 4:
-            get_followers(conn)
-        elif choice == 5:
-            manage_lists(session)
-        elif choice == 7:
-            select_tweet(curs)
-        elif choice == 8:
-            more_tweets()
-        """
-
-        # Currently operating functionalties
-        if choice == 3:
-            compose_tweet(conn, user)
-        elif choice == 7:
-            choice = tweets.select_tweet()
-
-    if tweetCurs:
-        tweetCurs.close()
+    
+    session.home()
 
     # Log out of the database system
     session.logout()

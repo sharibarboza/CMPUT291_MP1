@@ -27,7 +27,6 @@ from queries import (
 def compose_tweet(conn, user, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
-
     :param conn: session connection
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
@@ -131,7 +130,6 @@ class Tweet:
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 
         been selected
-
         Returns the selected option from the tweet menu
         """
         choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
@@ -253,7 +251,7 @@ class TweetSearch:
         tweet_num = self.choose_tweet()
         tweet = self.tweets[tweet_num - 1]
         tweet.display_stats()
-
+ 
         # Display the tweet menu
         choice = 0
         while choice < 4:
@@ -262,9 +260,12 @@ class TweetSearch:
             if choice == 3:
                 choice = self.select_tweet() 
 
-        # Return 6 when user chooses to logout
-        return 6 if choice == 5 else choice
-        
+        if choice == 4:
+            self.session.home()
+        else:
+            self.session.logout()
+            
+
     def choose_tweet(self):
         """Returns the number of the tweet the user wants to select"""
         choices = []
@@ -274,4 +275,3 @@ class TweetSearch:
 
         display_selections(choices)
         return validate_num(SELECT, size=len(choices))
-
