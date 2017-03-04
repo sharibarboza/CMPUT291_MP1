@@ -26,7 +26,7 @@ class Session:
         self.username = None
 
         self._start_up()
-        self.tweets = TweetSearch(self.conn, self.username)
+        self.tweets = TweetSearch(self, self.username)
         create_tStat(self.conn.cursor())
 
     def _start_up(self):
@@ -44,6 +44,9 @@ class Session:
     	    self.signup()
         else:
             sys.exit()
+
+    def get_conn(self):
+        return self.conn
 
     def login(self):
         """
@@ -157,6 +160,7 @@ class Session:
         self.curs.close()
         self.conn.close()
         print("Logged out.")
+        sys.exit()
         
 
 # ----------------------------------- MAIN --------------------------------------

@@ -62,25 +62,26 @@ def generate_tid(conn):
 class Tweet:
 
     def __init__(self, conn, user, data):
+        """
+        Represents a single tweet, helps to display tweets to console
+        param conn: database connection
+        param user: logged in user (not the tweet writer)
+        param data: row values from tweets table plus other values
+        """
         self.conn = conn
         self.curs = conn.cursor()
         self.user = user
 
-        # Tweet database values
         self.id = data[0]
         self.writer = data[1]
         self.date = data[2]
         self.text = data[3]
         self.replyto = data[4]
-        self.rt_user = data[5]
 
         if self.replyto:
             self.reply_user = get_user_from_tid(self.curs, self.replyto)
             self.reply_name = get_name(self.curs, self.reply_user)
             self.reply_text = get_text_from_tid(self.curs, self.replyto)
-
-        if self.rt_user:
-            self.rt_name = get_name(self.curs, self.rt_user)
 
         self.date_str = convert_date(self.date)
         self.rep_cnt = get_rep_cnt(self.curs, self.id)
@@ -88,9 +89,7 @@ class Tweet:
         self.writer_name = get_name(self.curs, self.writer)
 
     def display(self, user=None):
-        if self.is_retweet(): 
-            print("%s Retweeted" % (self.rt_name))         
-        elif user:
+        if user:
             user_name = get_name(self.curs, user)
             print("%s Retweeted" % (user_name))
 
@@ -99,7 +98,7 @@ class Tweet:
 
     def display_stats(self):
         print("\nTWEET STATISTICS\n")
-        print("Tweet id: %d" % (self.id))
+        print("Tweet ID: %d" % (self.id))
         print("Written by: %s @%d" % (self.writer_name, self.writer))
         print("Posted: %s" % (self.date_str))
         print("Text: %s" % (self.text))
@@ -121,8 +120,7 @@ class Tweet:
             compose_tweet(self.conn, self.user)
         elif choice == 2:
             self.retweet()
-        elif choice == 4:
-            choice = 6
+       
         return choice
 
     def retweet(self):
@@ -137,20 +135,21 @@ class Tweet:
             print("Retweet cancelled.")
         else:
             print("Retweeted - %s" % (TODAY))
-            data_list = [user, self.id, TODAY]
+            data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
-
-    def is_retweet(self):
-        return self.rt_user is not None and self.writer != self.rt_user
 
     def get_values(self):
         return [self.id, self.writer, self.date, self.text, self.replyto]
 
+    def is_retweet(self, user):
+        return self.writer != user
+
 
 class TweetSearch:
 
-    def __init__(self, conn, user):
-        self.conn = conn
+    def __init__(self, session, user):
+        self.session = session
+        self.conn = session.get_conn() 
         self.user = user
         self.tweets = []
 
@@ -172,7 +171,12 @@ class TweetSearch:
             print("Tweet %d" % (i))
             tweet = Tweet(self.conn, self.user, data=row)
             self.tweets.append(tweet)
-            tweet.display()
+   
+            rt_user = row[5]
+            if tweet.is_retweet(rt_user):
+                tweet.display(rt_user)
+            else:
+                tweet.display() 
 
         if len(self.rows) == 0:
             print("You have no tweets yet.")
@@ -186,7 +190,8 @@ class TweetSearch:
         while choice < 3:
             choice = tweet.tweet_menu()
 
-        return choice
+        if choice == 4:
+            self.session.logout() 
 
     def choose_tweet(self):
         choices = []
