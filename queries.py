@@ -188,3 +188,10 @@ def get_ret_cnt(curs, tid):
     """
     curs.execute('select ret_cnt from tStat where tid=:1', [tid])
     return curs.fetchone()
+
+def already_retweeted(curs, user, tid):
+    """
+    Returns true if the user has already tweeted the specific tweet
+    """
+    curs.execute('select * from retweets where usr=:1 and tid=:2', [user, tid])
+    return False if curs.fetchone() is None else True
