@@ -253,15 +253,16 @@ class TweetSearch:
         tweet = self.tweets[tweet_num - 1]
         tweet.display_stats()
 
+        # Display the tweet menu
         choice = 0
         while choice < 4:
             choice = tweet.tweet_menu()
+            
             if choice == 3:
                 choice = self.select_tweet() 
 
-        if choice == 5:
-            choice = 6
-        return choice 
+        # Return 6 when user chooses to logout
+        return 6 if choice == 5 else choice
 
     def choose_tweet(self):
         """Returns the number of the tweet the user wants to select"""
