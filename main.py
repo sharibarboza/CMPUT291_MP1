@@ -46,6 +46,7 @@ class Session:
         elif choice == 2:
     	    self.signup()
         else:
+            self.conn.close()
             sys.exit()
 
     def login(self):
@@ -70,8 +71,8 @@ class Session:
     def logout(self):
         """Logs user out of the system. Closes all cursors/connections"""
         self.curs.close()
-        self.conn.close()
         print("Logged out.")
+        main()
 
     def signup(self):
         """Creates a new user and inserts user into the database"""
@@ -135,13 +136,14 @@ def main():
     user = session.get_username()
     tweets = TweetSearch(conn, user)
     create_tStat(session.get_curs())
+    tweetCurs = None
 
     # Display main system functionalities menu
     choice = 0
     while choice != 6:
         print(BORDER)
-        curs = tweets.get_user_tweets()
-        choices = main_menu(curs)
+        tweetCurs = tweets.get_user_tweets()
+        choices = main_menu(tweetCurs)
         choice = validate_num(SELECT, size=len(choices)) 
 
         """
@@ -153,7 +155,7 @@ def main():
         elif choice == 3:
             compose_tweet()
         elif choice == 4:
-            get_followers()
+            get_followers(conn)
         elif choice == 5:
             manage_lists()
         elif choice == 7:
@@ -168,9 +170,11 @@ def main():
         elif choice == 7:
             choice = tweets.select_tweet()
 
+    if tweetCurs:
+        tweetCurs.close()
+
     # Log out of the database system
     session.logout()
-    main()
 
 if __name__ == "__main__":
     main()
