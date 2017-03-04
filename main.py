@@ -66,7 +66,7 @@ class Session:
     	    print("Welcome back, %s." % (first_name))
 
         if self.username is None:
-            self._start_up()
+            self.start_up()
 
     def logout(self):
         """Logs user out of the system. Closes all cursors/connections"""
@@ -157,7 +157,7 @@ def main():
         elif choice == 4:
             get_followers(conn)
         elif choice == 5:
-            manage_lists()
+            manage_lists(session)
         elif choice == 7:
             select_tweet(curs)
         elif choice == 8:
