@@ -8,22 +8,25 @@ from utils import (
 )
 
 from queries import (
+    get_name,
     select,
     follows_tweets,
-    get_name,
-    get_user_from_tid,
-    get_text_from_tid,
     get_rep_cnt,
     get_ret_cnt,
+    get_user_from_tid,
+    get_text_from_tid,
+    already_retweeted,
     insert_retweet,
     insert_tweet,
-    already_retweeted,
-    tid_exists
+    insert_mention,
+    insert_hashtag,
+    tid_exists,
+    hashtag_exists,
 )
 
 def compose_tweet(conn, user, replyto=None):
     """
-    Generates a new tweet
+    Generates a new tweet and inserts it into the database
     """
     text = input("Enter tweet: ")
     writer = user
@@ -38,9 +41,12 @@ def compose_tweet(conn, user, replyto=None):
     confirm = validate_yn("Confirm tweet? y/n: ")
     if confirm in ["n", "no"]:
         print("Tweet cancelled.")
+        return
     else:
         insert_tweet(conn, new_tweet.get_values())
         print("Tweet %d created." % (new_tweet.id))
+
+    new_tweet.set_terms()
 
 
 def generate_tid(conn):
@@ -49,14 +55,14 @@ def generate_tid(conn):
     """
     curs = conn.cursor()
     select(curs, 'tweets')
-    rows = curs.fetchall()
-    new_tid = len(rows) + 1
+    new_tid = len(curs.fetchall()) + 1
     
     while tid_exists(curs, new_tid): 
         new_tid += 1
-    
     curs.close()
+
     return new_tid
+
 
 class Tweet:
 
@@ -130,7 +136,6 @@ class Tweet:
             compose_tweet(self.conn, self.user)
         elif choice == 2:
             self.retweet()
-       
         return choice
 
     def retweet(self):
@@ -143,7 +148,6 @@ class Tweet:
             return
             
         self.display(self.user)
-
         confirm = validate_yn("Confirm retweet? y/n: ")
         if confirm in ["n", "no"]:
             print("Retweet cancelled.")
@@ -158,12 +162,43 @@ class Tweet:
         """
         return [self.id, self.writer, self.date, self.text, self.replyto]
 
+    def set_terms(self):
+        """
+        Finds the hashtags in a tweet and insert them into the
+        hashtags and mentions tables
+        """
+        hashtags = self.find_hashtags()
+        for tag in hashtags:
+            term = self.extract_term(tag)
+            print(term) 
+            if not hashtag_exists(self.curs, term):
+                insert_hashtag(self.conn, term)     
+            insert_mention(self.conn, [self.id, term])
+
+    def extract_term(self, index):
+        """
+        Get the hashtag term in the tweet based on the index
+        """
+        space_index = self.text.find(' ', index)
+        if space_index < 0:
+            space_index = len(self.text) + 1
+
+        return self.text[index + 1:space_index]
+
+    def find_hashtags(self):
+        """
+        Returns a list of all indexes of found hashtags
+        """
+        index_list = []
+        for i, ch in enumerate(self.text):
+            if ch == '#':
+                index_list.append(i)
+        return index_list
 
 class TweetSearch:
 
-    def __init__(self, session, user):
-        self.session = session
-        self.conn = session.get_conn() 
+    def __init__(self, conn, user):
+        self.conn = conn 
         self.user = user
         self.tweets = []
 
@@ -205,7 +240,8 @@ class TweetSearch:
             choice = tweet.tweet_menu()
 
         if choice == 4:
-            self.session.logout() 
+            choice = 6
+        return choice 
 
     def choose_tweet(self):
         choices = []
