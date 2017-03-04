@@ -80,7 +80,7 @@ class Session:
         name = validate_str("Enter your name: ", 20)
         email = validate_str("Enter your email: ", 15)
         city = validate_str("Enter your city: ", 12)
-        timezone = validate_num("Enter your timezone: ")
+        timezone = float(validate_num("Enter your timezone: "))
         password = validate_str("Enter your password: ", 4)
 
         print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
