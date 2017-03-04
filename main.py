@@ -17,7 +17,6 @@ class Session:
     def __init__(self):
         """
         Establishes a connection with cx_Oracle and logs in user
-        param: object returned from get_connection in main
         """
         self.conn = get_connection("sql_login.txt") 
         self.curs = self.conn.cursor()

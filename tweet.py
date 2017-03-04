@@ -199,8 +199,8 @@ class TweetSearch:
 
     def __init__(self, conn, user):
         """
-        Can be used for getting tweets of users being followed or 
-        searching for specific tweets based on keywords
+        Can be used for getting tweets of users being 
+        followed or searching for specific tweets based on keywords
         param conn: database connection
         param user: logged in user id
         """ 
@@ -210,7 +210,7 @@ class TweetSearch:
 
     def get_user_tweets(self):
         """
-        Find tweets/retweets from users are being followed
+        Find tweets/retweets from users who are being followed
         """
         curs = self.conn.cursor()
         follows_tweets(curs, self.user)
