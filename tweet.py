@@ -25,8 +25,12 @@ from queries import (
 )
 
 def compose_tweet(conn, user, replyto=None):
-    """
-    Generates a new tweet and inserts it into the database
+    """ Generates a new tweet and inserts it into the database
+    Also inserts any hashtags into hashtags and mentions tables
+
+    :param conn: session connection
+    :param user: logged in user's id
+    :param replyto (optional): the user id of who the tweet is replying to
     """
     text = input("Enter tweet: ")
     writer = user
@@ -50,8 +54,9 @@ def compose_tweet(conn, user, replyto=None):
 
 
 def generate_tid(conn):
-    """
-    Generates a new unique tweet id
+    """ Generates a new unique tweet id
+    
+    :param conn: session connection
     """
     curs = conn.cursor()
     select(curs, 'tweets')
@@ -67,11 +72,11 @@ def generate_tid(conn):
 class Tweet:
 
     def __init__(self, conn, user, data):
-        """
-        Represents a single tweet, helps to display tweets to console
-        param conn: database connection
+        """ Represents a single tweet, helps to display tweets to console
+        
+        param conn: database session connection 
         param user: logged in user (not the tweet writer)
-        param data: row values from tweets table plus other values
+        param data: row values from tweets table corresponding to columns 
         """
         self.conn = conn
         self.curs = conn.cursor()
@@ -94,9 +99,10 @@ class Tweet:
         self.writer_name = get_name(self.curs, self.writer)
 
     def display(self, user=None):
-        """
-        Displays basic info on a tweet
+        """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
+        
+        :param user (optional): user id of the user who retweeted this tweet
         """
         if user:
             user_name = get_name(self.curs, user)
@@ -106,10 +112,9 @@ class Tweet:
         print("%s\n" % (self.text))
 
     def display_stats(self):
-        """
-        Displays statistics on a tweet after a tweet has been selected
-        """
+        """ Displays statistics on a tweet after a tweet has been selected"""
         print("\nTWEET STATISTICS\n")
+
         print("Tweet ID: %d" % (self.id))
         print("Written by: %s @%d" % (self.writer_name, self.writer))
         print("Posted: %s" % (self.date_str))
@@ -124,9 +129,10 @@ class Tweet:
         print("Number of retweets: %s" % (self.ret_cnt))
 
     def tweet_menu(self):
-        """
-        Displays options to reply or retweet a tweet after it has 
+        """Displays options to reply or retweet a tweet after it has 
         been selected
+
+        Returns the selected option from the tweet menu
         """
         choices = ["Reply", "Retweet", "Home", "Logout"]
         display_selections(choices)
@@ -139,8 +145,7 @@ class Tweet:
         return choice
 
     def retweet(self):
-        """
-        Allows logged in user to retweet a selected tweet and 
+        """Allows logged in user to retweet a selected tweet and 
         insert retweet into the database
         """
         if already_retweeted(self.curs, self.user, self.id):
@@ -157,14 +162,11 @@ class Tweet:
             insert_retweet(self.conn, data_list)
 
     def get_values(self):
-        """
-        Returns a list of tid, writer, tdate, text, and replyto
-        """
+        """Returns a list of tid, writer, tdate, text, and replyto"""
         return [self.id, self.writer, self.date, self.text, self.replyto]
 
     def set_terms(self):
-        """
-        Finds the hashtags in a tweet and insert them into the
+        """Finds the hashtags in a tweet and insert them into the
         hashtags and mentions tables
         """
         hashtags = self.find_hashtags()
@@ -176,8 +178,10 @@ class Tweet:
             insert_mention(self.conn, [self.id, term])
 
     def extract_term(self, index):
-        """
-        Get the hashtag term in the tweet based on the index
+        """Gets the hashtag term in the tweet based on the index
+        
+        :param index: the index of the hashtag in the tweet text
+        Returns the hashtag term
         """
         space_index = self.text.find(' ', index)
         if space_index < 0:
@@ -186,9 +190,7 @@ class Tweet:
         return self.text[index + 1:space_index]
 
     def find_hashtags(self):
-        """
-        Returns a list of all indexes of found hashtags
-        """
+        """ Returns a list of all indexes of found hashtags"""
         index_list = []
         for i, ch in enumerate(self.text):
             if ch == '#':
@@ -198,10 +200,10 @@ class Tweet:
 class TweetSearch:
 
     def __init__(self, conn, user):
-        """
-        Can be used for getting tweets of users being 
+        """Can be used for getting tweets of users being 
         followed or searching for specific tweets based on keywords
-        param conn: database connection
+         
+        param conn: database session connection
         param user: logged in user id
         """ 
         self.conn = conn 
@@ -209,8 +211,9 @@ class TweetSearch:
         self.tweets = []
 
     def get_user_tweets(self):
-        """
-        Find tweets/retweets from users who are being followed
+        """Find tweets/retweets from users who are being followed
+    
+        Returns cursor object or None if user has no tweets
         """
         curs = self.conn.cursor()
         follows_tweets(curs, self.user)
@@ -225,9 +228,7 @@ class TweetSearch:
             return None 
 
     def display_tweets(self):
-        """
-        Display resulting tweets 5 at a time ordered by date
-        """
+        """Display resulting tweets 5 at a time ordered by date"""
         for i, row in enumerate(self.rows, 1):
             print("Tweet %d" % (i))
             tweet = Tweet(self.conn, self.user, data=row)
@@ -243,8 +244,9 @@ class TweetSearch:
             print("You have no tweets yet.")
 
     def select_tweet(self):
-        """
-        Prompt user to choose one of the displayed tweets
+        """Prompt user to choose one of the displayed tweets
+        
+        Returns selected option from tweet menu 
         """
         tweet_num = self.choose_tweet()
         tweet = self.tweets[tweet_num - 1]
@@ -259,9 +261,7 @@ class TweetSearch:
         return choice 
 
     def choose_tweet(self):
-        """
-        Get the number of the tweet the user wants to select
-        """
+        """Returns the number of the tweet the user wants to select"""
         choices = []
         for i, row in enumerate(self.rows, 1):
             tweet_str = "Tweet %d" % (i)

@@ -2,9 +2,10 @@
 
 # ---------------------------- INSERT QUERIES ----------------------------------
 def insert_user(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of usr, pwd, name, email, city, timezone values
+    """ Inserts new user into users table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of usr, pwd, name, email, city, timezone values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into users(usr,pwd,name,email,city,timezone)"
@@ -14,9 +15,10 @@ def insert_user(conn, data_list):
     return cursInsert
 
 def insert_follow(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of flwer, flwee, start_date values
+    """ Inserts new follow relationship into follows table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of flwer, flwee, start_date values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into follows(flwer,flwee,start_date)"
@@ -26,9 +28,10 @@ def insert_follow(conn, data_list):
     return cursInsert
 
 def insert_tweet(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of tid, writer, tdate, text, replyto values
+    """ Inserts new tweet into tweets table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of tid, writer, tdate, text, replyto values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into tweets(tid,writer,tdate,text,replyto)"
@@ -38,9 +41,10 @@ def insert_tweet(conn, data_list):
     return cursInsert
 
 def insert_hashtag(conn, term):
-    """
-    param conn: connection (not cursor object)
-    param term: single string containing a hashtag term
+    """ Inserts new hashtag into hashtags table
+
+    :param conn: connection (not cursor object)
+    :param term: single string containing a hashtag term
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into hashtags(term) values(:1)", [term])
@@ -49,9 +53,10 @@ def insert_hashtag(conn, term):
     return cursInsert
 
 def insert_mention(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of tid, term values
+    """ Inserts new mention into mentions table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of tid, term values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into mentions(tid,term)"
@@ -61,9 +66,10 @@ def insert_mention(conn, data_list):
     return cursInsert
 
 def insert_retweet(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of usr, tid, rdate values
+    """ Inserts new retweet into retweets table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of usr, tid, rdate values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into retweets(usr,tid,rdate)"
@@ -73,9 +79,10 @@ def insert_retweet(conn, data_list):
     return cursInsert
 
 def insert_list(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of lname, owner values
+    """ Inserts new list into lists table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of lname, owner values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into lists(lname,owner)"
@@ -85,9 +92,10 @@ def insert_list(conn, data_list):
     return cursInsert
 
 def insert_include(conn, data_list):
-    """
-    param conn: connection (not cursor object)
-    param data_list: list of lname, member values
+    """ Inserts new include into includes table
+
+    :param conn: connection (not cursor object)
+    :param data_list: list of lname, member values
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into includes(lname,member)"
@@ -99,60 +107,67 @@ def insert_include(conn, data_list):
 # -------------------------- SPECIFIC SELECT QUERIES --------------------------------
 
 def find_user(curs, username, password):
-    """
-    Returns the tuple of a specific user from the database
-    param curs: cursor object
-    param username: user id (must be a number)
-    param password: user password (4 char)
+    """ Returns the tuple of a specific user from the database
+    
+    :param curs: cursor object
+    :param username: user id (must be a number)
+    :param password: user password (4 char)
     """
     curs.execute('select * from users where usr=:1 and pwd=:2', [username,password])
     return curs.fetchone()
 
 def user_exists(curs, user):
-    """
-    Checks if a user exists in the database
-    param user: user id (must be a number)
+    """ Checks if a user exists in the database
+    
+    :param curs: cursor object
+    :param user: user id (must be a number)
     """
     curs.execute('select usr from users where usr=:1', [user])
     return curs.fetchone() is not None 
 
 def tid_exists(curs, tid):
-    """
-    Checks if a tweet id exists in the database
-    param tid: tweet id
+    """ Checks if a tweet id exists in the database
+    
+    :param curs: cursor object
+    :param tid: tweet id
     """
     curs.execute('select tid from tweets where tid=:1', [tid])
     return curs.fetchone() is not None
 
 def hashtag_exists(curs, term):
-    """
-    Checks if a hashtag term exists in the database
-    param term: hashtag word
+    """ Checks if a hashtag term exists in the database
+    
+    :param curs: cursor object
+    :param term: hashtag word
     """
     curs.execute('select term from hashtags where term=:1', [term])
     return curs.fetchone() is not None
 
 def mention_exists(curs, tid, term):
-    """
-    Checks if a mention exists in the database
-    param tid: tweet id
-    param term: hashtag word
+    """ Checks if a mention exists in the database
+    
+    :param curs: cursor object
+    :param tid: tweet id
+    :param term: hashtag word
     """
     curs.execute('select term from mention where tid=:1 and term=:2',
         [tid, term])
     return curs.fetchone() is not None 
 
 def select(curs, table):
-    """
-    Select rows from a table 
+    """ Select rows from a table 
+    
+    :param curs: cursor object
+    :param table: name of table to select from
     """
     curs.execute("select * from %s" % (table))
 
 def follows_tweets(curs, user):
-    """
-    Gets the tweets/retweets from users who are being followed by the user
+    """ Gets the tweets/retweets from users who are being followed by the user
     Ordered by tweet date
-    param user: logged-in user
+    
+    :param curs: cursor boejct
+    :param user: logged-in user id
     """
     curs.execute('select distinct t.tid, t.writer, t.tdate, t.text, t.replyto, t2.usr '
         'from tweets t left outer join (select f.flwer, f.flwee, rt.usr, rt.tid '
@@ -161,32 +176,39 @@ def follows_tweets(curs, user):
         [user])
 
 def get_name(curs, user):
-    """
-    Gets a specific user
+    """Gets a specific user's name
+    
+    :param curs: cursor object
+    :param user: a user's id
     """
     curs.execute('select name from users where usr=:1', [user])
     return curs.fetchone()[0].rstrip()
 
 def get_user_from_tid(curs, tid):
-    """
-    Gets the name of the writer of a specified tweet
+    """ Gets the name of the writer of a specified tweet
+    
+    :param curs: cursor object
+    :param tid: a tweet's id
     """
     curs.execute('select usr from users, tweets where tid=:1 '
         'and writer = usr', [tid])
     return curs.fetchone()[0]
 
 def get_text_from_tid(curs, tid):
-    """
-    Gets the text from the specified tweet
+    """ Gets the text from the specified tweet
+    
+    :param curs: cursor object
+    :param tid: a tweet's id
     """
     curs.execute('select text from tweets where tid=:1', [tid])
     return curs.fetchone()[0].rstrip()
 
 def create_tStat(curs):
-    """
-    Create view tStat to return statistics about a tweet including
+    """ Create view tStat to return statistics about a tweet including
     tid, writer, tdate, text, retweet count, reply count, and 
     mention count
+
+    :param curs: cursor object
     """
     curs.execute('drop view tStat')
     curs.execute('create view tStat (tid, writer, tdate, text, rep_cnt, '
@@ -199,24 +221,29 @@ def create_tStat(curs):
         'group by t.tid, t.writer, t.tdate, t.text')
 
 def get_rep_cnt(curs, tid):
-    """
-    Get the reply count of a specific tweet
-    param: tid - tweet id
+    """ Get the reply count of a specific tweet
+    
+    param curs: cursor object
+    param: tid: a tweet's id
     """
     curs.execute('select rep_cnt from tStat where tid=:1', [tid])
     return curs.fetchone()
 
 def get_ret_cnt(curs, tid):
-    """
-    Get the retweetn count of a specific tweet
-    param: tid - tweet id
+    """ Get the retweetn count of a specific tweet
+    
+    param curs: cursor object
+    param: tid: a tweet's id
     """
     curs.execute('select ret_cnt from tStat where tid=:1', [tid])
     return curs.fetchone()
 
 def already_retweeted(curs, user, tid):
-    """
-    Returns true if the user has already tweeted the specific tweet
+    """ Returns true if the user has already tweeted the specific tweet
+    
+    param curs: cursor object
+    param user: a user's id
+    param tid: a tweet's id
     """
     curs.execute('select * from retweets where usr=:1 and tid=:2', [user, tid])
     return False if curs.fetchone() is None else True

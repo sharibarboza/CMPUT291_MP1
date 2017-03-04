@@ -15,34 +15,26 @@ Due: March 12 5 PM
 class Session:
 
     def __init__(self):
-        """
-        Establishes a connection with cx_Oracle and logs in user
-        """
-        self.conn = get_connection("sql_login.txt") 
+        """Establishes a connection with cx_Oracle and logs in user"""
+ 
+        self.username = None	    
+        self.conn = get_connection("sql_login.txt")
         self.curs = self.conn.cursor()
-        self.username = None
-
+        
     def get_conn(self):
-        """
-        Return the connection
-        """
+        """Return the connection"""
         return self.conn
 
     def get_curs(self):
-        """
-        Return the cursor
-        """
+        """Return the cursor"""
         return self.curs
 
     def get_username(self):
-        """
-        Return the logged in user id
-        """
+        """Return the logged in user id"""
         return self.username
 
     def start_up(self):
-        """
-        Displays start up screen to provide options for both
+        """Displays start up screen to provide options for both
         registered and unregistered users 
         """
         choices = ["Login", "Sign up", "Exit"]
@@ -57,8 +49,7 @@ class Session:
             sys.exit()
 
     def login(self):
-        """
-        Allows returning user to sign in. Will return to the start
+        """Allows returning user to sign in. Will return to the start
         up screen if login fails
         """
         self.username = validate_num("Enter username: ")
@@ -77,33 +68,27 @@ class Session:
             self.start_up()
 
     def logout(self):
-        """
-        Logs user out of the system. Closes all cursors/connections 
-        """
+        """Logs user out of the system. Closes all cursors/connections"""
         self.curs.close()
         self.conn.close()
         print("Logged out.")
 
     def signup(self):
-        """
-        Creates a new user and inserts user into the database
-        """
+        """Creates a new user and inserts user into the database"""
+        self.username = self.generate_user()
         name = validate_str("Enter your name: ", 20)
         email = validate_str("Enter your email: ", 15)
         city = validate_str("Enter your city: ", 12)
         timezone = validate_num("Enter your timezone: ")
         password = validate_str("Enter your password: ", 4)
 
-        self.username = self.generate_user()
         print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
 
     def generate_user(self):
-        """
-        Generates a new unique user id for user sign-up
-        """
+        """Generates a new unique user id for user sign-up"""
         select(self.curs, 'users')
         rows = self.curs.fetchall()
         new_usr = len(rows) + 1
@@ -113,8 +98,9 @@ class Session:
         return new_usr
 
 def main_menu(curs):
-    """
-    Displays the main functionality menu
+    """Displays the main functionality menu
+    
+    :param curs: cursor object
     """
     choices = [
         "Search tweets", 
