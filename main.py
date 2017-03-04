@@ -2,40 +2,48 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
-from tweet import TweetSearch, compose_tweet
+from utils import display_selections, validate_str, validate_num
+from queries import insert_user, find_user, user_exists, select, create_tStat
+from tweet import TweetSearch
 
-from utils import (
-    display_selections,
-    validate_str,
-    validate_num
-) 
-
-from queries import (
-    insert_user,
-    find_user,
-    user_exists,
-    select,
-    create_tStat
-)
+"""
+CMPUT 291 Mini Project 1
+Contributors: Hong Zhou, Haotian Zhu, Sharidan Barboza
+Due: March 12 5 PM
+"""
 
 class Session:
 
     def __init__(self, conn):
+        """
+        Every session represents a single connection to the database
+        and a logged in user
+        param: object returned from get_connection in main
+        """
         self.conn = conn
         self.curs = conn.cursor()
         self.username = None
-        self._start_up()
+        self.start_up()
 
     def get_conn(self):
+        """
+        Return the connection
+        """
         return self.conn
 
     def get_curs(self):
+        """
+        Return the cursor
+        """
         return self.curs
 
     def get_username(self):
+        """
+        Return the logged in user id
+        """
         return self.username
 
-    def _start_up(self):
+    def start_up(self):
         """
         Displays start up screen to provide options for both
         registered and unregistered users 
@@ -69,7 +77,16 @@ class Session:
     	    print("Welcome back, %s." % (first_name))
 
         if self.username is None:
-            self._start_up()
+            self.start_up()
+
+    def logout(self):
+        """
+        Logs user out of the system. Closes all cursors/connections 
+        """
+        self.curs.close()
+        self.conn.close()
+        print("Logged out.")
+        sys.exit()
 
     def signup(self):
         """
@@ -99,16 +116,6 @@ class Session:
             new_usr += 1
     
         return new_usr
-      
-    def logout(self):
-        """
-        Logs user out of the system. Closes all cursors/connections 
-        """
-        self.curs.close()
-        self.conn.close()
-        print("Logged out.")
-        sys.exit()
-
 
 def main_menu(curs):
     """
@@ -137,18 +144,22 @@ def main_menu(curs):
 # ----------------------------------- MAIN --------------------------------------
 
 def main():
-    # Connect to database
+    # Establish connection with cx_Oracle 
     conn = get_connection("sql_login.txt")
+
+    # Log in/sign up user into database
     session = Session(conn)
+
+    # Get the users's opening screen tweets
     tweets = TweetSearch(session, session.get_username())
     create_tStat(session.get_curs())
 
+    # Display main system functionalities menu
     choice = 0
     while choice != 6:
         print(BORDER)
         curs = tweets.get_user_tweets()
         choices = main_menu(curs)
-
         choice = validate_num(SELECT, size=len(choices)) 
 
         """
@@ -168,11 +179,14 @@ def main():
         elif choice == 8:
             more_tweets()
         """
+
+        # Currently operating functionalties
         if choice == 3:
             compose_tweet(self.username)
         elif choice == 7:
             tweets.select_tweet()
 
+    # Log out of the database system
     session.logout()
 
 if __name__ == "__main__":

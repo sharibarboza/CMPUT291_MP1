@@ -5,7 +5,6 @@ from utils import (
     display_selections, 
     validate_num,
     validate_yn,
-    press_enter
 )
 
 from queries import (
@@ -89,6 +88,10 @@ class Tweet:
         self.writer_name = get_name(self.curs, self.writer)
 
     def display(self, user=None):
+        """
+        Displays basic info on a tweet
+        Used for first screen after login or a tweet search
+        """
         if user:
             user_name = get_name(self.curs, user)
             print("%s Retweeted" % (user_name))
@@ -97,6 +100,9 @@ class Tweet:
         print("%s\n" % (self.text))
 
     def display_stats(self):
+        """
+        Displays statistics on a tweet after a tweet has been selected
+        """
         print("\nTWEET STATISTICS\n")
         print("Tweet ID: %d" % (self.id))
         print("Written by: %s @%d" % (self.writer_name, self.writer))
@@ -112,6 +118,10 @@ class Tweet:
         print("Number of retweets: %s" % (self.ret_cnt))
 
     def tweet_menu(self):
+        """
+        Displays options to reply or retweet a tweet after it has 
+        been selected
+        """
         choices = ["Reply", "Retweet", "Home", "Logout"]
         display_selections(choices)
         choice = validate_num(SELECT, size=len(choices))
@@ -124,6 +134,10 @@ class Tweet:
         return choice
 
     def retweet(self):
+        """
+        Allows logged in user to retweet a selected tweet and 
+        insert retweet into the database
+        """
         if already_retweeted(self.curs, self.user, self.id):
             print("You already retweeted this tweet.")
             return
@@ -139,10 +153,10 @@ class Tweet:
             insert_retweet(self.conn, data_list)
 
     def get_values(self):
+        """
+        Returns a list of tid, writer, tdate, text, and replyto
+        """
         return [self.id, self.writer, self.date, self.text, self.replyto]
-
-    def is_retweet(self, user):
-        return self.writer != user
 
 
 class TweetSearch:
@@ -173,7 +187,7 @@ class TweetSearch:
             self.tweets.append(tweet)
    
             rt_user = row[5]
-            if tweet.is_retweet(rt_user):
+            if tweet.writer != rt_user: 
                 tweet.display(rt_user)
             else:
                 tweet.display() 
