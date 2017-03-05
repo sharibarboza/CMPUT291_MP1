@@ -16,7 +16,6 @@ class Session:
 
     def __init__(self):
         """Establishes a connection with cx_Oracle and logs in user"""
- 
         self.conn = self.connect() 
         self.curs = self.conn.cursor()
         self.username = None
@@ -92,7 +91,7 @@ class Session:
             self.start_up()
 
     def logout(self):
-        """Logs user out of the system. Closes all cursors/connections"""
+        """Logs user out of the system. Returns user to start up screen"""
         print("Logged out.")
         self.start_up()
 
@@ -121,6 +120,7 @@ class Session:
         return new_usr
 
     def get_home_tweets(self):
+        """Gets the tweets of users being followed by the user"""
         self.tweets = TweetSearch(self, self.username)
         self.tweets.get_user_tweets()
         self.home()
@@ -128,7 +128,7 @@ class Session:
     def _main_menu(self, t):
         """Displays the main functionality menu
     
-        :param curs: cursor object
+        :param t: TweetSearch object (can be self.tweets or self.s_tweets)
         """
         choices = [
             "Search tweets", 
@@ -153,7 +153,7 @@ class Session:
         """Displays main system functionalities menu"""
         while True:
             print(BORDER)
-           
+            
             t = self.s_tweets if self.s_tweets else self.tweets
             t.display_tweets()
             choices = self._main_menu(t)
@@ -195,7 +195,6 @@ class Session:
                 compose_tweet(self.conn, self.username, self.home)
             elif option == 'Logout':
                 self.logout()
-
    
 # ----------------------------------- MAIN --------------------------------------
 
