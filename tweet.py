@@ -101,9 +101,6 @@ class Tweet:
         self.ret_cnt = get_ret_cnt(self.curs, self.id)
         self.writer_name = get_name(self.curs, self.writer)
 
-    def get_id(self):
-        return self.id
-
     def display(self, user=None):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
