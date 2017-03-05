@@ -210,7 +210,6 @@ def create_tStat(curs):
 
     :param curs: cursor object
     """
-    curs.execute('drop view tStat')
     curs.execute('create view tStat (tid, writer, tdate, text, rep_cnt, '
         'ret_cnt, sim_cnt) as select t.tid, t.writer, t.tdate, t.text, '
         'count(distinct t2.tid), count(distinct rt.usr), count(distinct m2.tid) '
@@ -219,6 +218,10 @@ def create_tStat(curs):
         'left outer join mentions m on t.tid = m.tid) '
         'left outer join mentions m2 on m.term = m2.term '
         'group by t.tid, t.writer, t.tdate, t.text')
+
+def tStat_exists(curs):
+    curs.execute("select view_name from user_views where view_name='TSTAT'")
+    return curs.fetchone()[0] is not None
 
 def get_rep_cnt(curs, tid):
     """ Get the reply count of a specific tweet
