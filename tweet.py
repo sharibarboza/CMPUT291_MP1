@@ -196,31 +196,51 @@ class TweetSearch:
         self.session = session
         self.conn = session.get_conn() 
         self.user = user
+        self.all_tweets = []
         self.tweets = []
+        self.more_exist = False
+        self.tweet_index = 5
+        self.rows = None
+        self.tweetCurs = None
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed
     
         Returns cursor object or None if user has no tweets
         """
-        curs = self.conn.cursor()
-        follows_tweets(curs, self.user)
+        self.tweetCurs = self.conn.cursor()
+        follows_tweets(self.tweetCurs, self.user)
 
-        self.rows = curs.fetchmany(5)
-        self.display_tweets()
+        self.all_tweets = self.tweetCurs.fetchall()
+        self.more_tweets()
+        self.add_tweets()
        
-        if len(self.rows) > 0:
-            return curs
-        else:
-            curs.close()
-            return None 
+        return True if len(self.rows) > 0 else False
+
+    def add_tweets(self):
+        self.tweets = []
+        for row in self.rows:
+            tweet = Tweet(self.conn, self.user, data=row)
+            self.tweets.append(tweet)
+
+    def more_tweets(self):
+        """
+        Gets the next 5 tweets from users who are being followed
+        """
+        assert(self.tweetCurs is not None), 'Unable to select more tweets'
+        self.rows = self.all_tweets[self.tweet_index - 5:self.tweet_index]
+        self.more_exist = len(self.all_tweets) - self.tweet_index > 0
+        self.tweet_index += 5
+        self.add_tweets()
+
+    def more_tweets_exist(self):
+        return self.more_exist
 
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
-        for i, row in enumerate(self.rows, 1):
-            print("Tweet %d" % (i))
-            tweet = Tweet(self.conn, self.user, data=row)
-            self.tweets.append(tweet)
+        for i, row in enumerate(self.rows):
+            print("Tweet %d" % (i + 1))
+            tweet = self.tweets[i]
    
             rt_user = row[5]
             if tweet.writer != rt_user: 
@@ -256,7 +276,7 @@ class TweetSearch:
             elif choice == 2:
                 self.retweet()                    
             elif choice == 3:
-                choice = self.select_tweet()
+                choice = self.choose_tweet()
 
         if choice == 4:
             self.session.home()

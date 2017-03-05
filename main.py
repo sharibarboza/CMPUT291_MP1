@@ -20,16 +20,13 @@ class Session:
         self.username = None	    
         self.conn = get_connection("sql_login.txt")
         self.curs = self.conn.cursor()
+        self.tweets = None
+        self.tweets_exist = False
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
 
-        # Keeping track of home page tweets
-        self.tweetCurs = None
-        self.tweets = None
-
         self.start_up()
-        self.tweets = None
         
     def get_conn(self):
         """Return the connection"""
@@ -61,10 +58,6 @@ class Session:
     def exit(self):
         """Exit from the system and close database"""
         self.curs.close()
-
-        if self.tweetCurs:
-            self.tweetCurs.close()
-
         self.conn.close()
         sys.exit()
 
@@ -120,9 +113,10 @@ class Session:
 
     def get_home_tweets(self):
         self.tweets = TweetSearch(self, self.username)
+        self.tweets_exist = self.tweets.get_user_tweets()
         self.home()
 
-    def main_menu(self):
+    def _main_menu(self):
         """Displays the main functionality menu
     
         :param curs: cursor object
@@ -137,11 +131,10 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if self.tweetCurs:
+        if self.tweets_exist:
             choices.insert(0, "Select a tweet")
-
-            rows = self.tweetCurs.fetchmany(5)
-            if len(rows) > 0:
+    
+            if self.tweets.more_tweets_exist():
                 choices.insert(1, "See more tweets")
     
         display_selections(choices)
@@ -151,9 +144,9 @@ class Session:
     # Display main system functionalities menu
         while True:
             print(BORDER)
-            self.tweetCurs = self.tweets.get_user_tweets()
-            choices = self.main_menu()
-            choice = validate_num(SELECT, self.exit, size=len(choices)) - 1
+            self.tweets.display_tweets()
+            choices = self._main_menu()
+            choice = validate_num(SELECT, self.start_up, size=len(choices)) - 1
 
             """
             Main outline for program
@@ -179,6 +172,8 @@ class Session:
             # Currently operating functionalties
             if choices[choice] == 'Select a tweet':
                 self.tweets.choose_tweet()
+            elif choices[choice] == 'See more tweets':
+                self.tweets.more_tweets()
             elif choices[choice] == 'Compose tweet':
                 compose_tweet(self.conn, self.username, self.home)
             elif choices[choice] == 'Logout':
