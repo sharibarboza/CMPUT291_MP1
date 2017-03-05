@@ -42,10 +42,11 @@ def press_enter(prompt="Press Enter to continue."):
 
 def validate_str(prompt, menu_func=None, length=None):
     """Used for when user needs to input words
-    Commonly used for validating insert values   
+    Commonly used for validating insert values  
+    If you are passing a function name, make sure to not put () so it won't be called
  
     :param prompt: string message
-    :param prompt: if user enters quit, return to this function
+    :param menu_func: if user enters quit, return to this function
     :param length (optional): restricts the number of characters
     """
     valid = False
@@ -66,6 +67,7 @@ def validate_str(prompt, menu_func=None, length=None):
 def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     """Used for when user needs to input a single number
     Used mainly for menu selections
+    If you are passing a function name, make sure to not put () so it won't be called
     
     :param prompt: string message
     :param menu_func: if user enters quit, return to this function
