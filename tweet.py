@@ -27,7 +27,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     else:
         insert_tweet(conn, new_tweet.get_values())
         print("Tweet %d created." % (new_tweet.id))
-        utils.press_enter()
+        press_enter()
 
     new_tweet.set_terms()
 
