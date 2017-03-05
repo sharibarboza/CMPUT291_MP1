@@ -83,9 +83,7 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
             if size and choice not in range(1, size+1):
                 raise ValueError
         except ValueError:
-            if choice.lower() == 'quit':
-                return
-            elif size:
+            if size:
                 print("Selection must be a number from 1 to %d." % (size))
             else:
                 print("Please enter a number.")
