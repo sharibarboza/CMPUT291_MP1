@@ -6,6 +6,7 @@ from utils import (
     validate_str,
     validate_num,
     validate_yn,
+    press_enter
 )
 
 from queries import (
@@ -28,6 +29,7 @@ from queries import (
 def compose_tweet(conn, user, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
+
     :param conn: session connection
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
@@ -49,6 +51,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     else:
         insert_tweet(conn, new_tweet.get_values())
         print("Tweet %d created." % (new_tweet.id))
+        press_enter()
 
     new_tweet.set_terms()
 
@@ -144,6 +147,7 @@ class Tweet:
             print("Retweeted - %s" % (TODAY))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
+            press_enter()
 
     def get_values(self):
         """Returns a list of tid, writer, tdate, text, and replyto"""
@@ -193,31 +197,53 @@ class TweetSearch:
         self.session = session
         self.conn = session.get_conn() 
         self.user = user
+        self.all_tweets = []
         self.tweets = []
+        self.more_exist = False
+        self.tweet_index = 5
+        self.rows = None
+        self.tweetCurs = None
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed
     
         Returns cursor object or None if user has no tweets
         """
-        curs = self.conn.cursor()
-        follows_tweets(curs, self.user)
+        self.tweetCurs = self.conn.cursor()
+        follows_tweets(self.tweetCurs, self.user)
 
-        self.rows = curs.fetchmany(5)
-        self.display_tweets()
+        self.all_tweets = self.tweetCurs.fetchall()
+        self.more_tweets()
+        self.add_tweets()
        
-        if len(self.rows) > 0:
-            return curs
-        else:
-            curs.close()
-            return None 
+        return True if len(self.rows) > 0 else False
+
+    def add_tweets(self):
+        """Adds tweets from the 5 currently displayed tweets to a list"""
+        self.tweets = []
+        for row in self.rows:
+            tweet = Tweet(self.conn, self.user, data=row)
+            self.tweets.append(tweet)
+
+    def more_tweets(self):
+        """
+        Gets the next 5 tweets from users who are being followed
+        """
+        assert(self.tweetCurs is not None), 'Unable to select more tweets'
+        self.rows = self.all_tweets[self.tweet_index - 5:self.tweet_index]
+        self.more_exist = len(self.all_tweets) - self.tweet_index > 0
+        self.tweet_index += 5
+        self.add_tweets()
+
+    def more_tweets_exist(self):
+        """Return true if more tweets can be displayed"""
+        return self.more_exist
 
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
-        for i, row in enumerate(self.rows, 1):
-            print("Tweet %d" % (i))
-            tweet = Tweet(self.conn, self.user, data=row)
-            self.tweets.append(tweet)
+        for i, row in enumerate(self.rows):
+            print("Tweet %d" % (i + 1))
+            tweet = self.tweets[i]
    
             rt_user = row[5]
             if tweet.writer != rt_user: 
@@ -253,7 +279,7 @@ class TweetSearch:
             elif choice == 2:
                 self.retweet()                    
             elif choice == 3:
-                choice = self.select_tweet()
+                choice = self.choose_tweet()
 
         if choice == 4:
             self.session.home()

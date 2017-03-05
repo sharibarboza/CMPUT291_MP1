@@ -21,7 +21,18 @@ def display_selections(selections):
     print(BORDER)
 
 def check_quit(user_input):
+    """Checks if a user entered a quit message
+
+    :param: user_input: input from the user
+    """
     return user_input.lower() in ['quit', 'q', 'exit']
+
+def press_enter(prompt="Press Enter to continue."):
+    """Requires user to press enter key before continuing
+
+    :param: string message
+    """
+    input(prompt)
 
 def validate_str(prompt, menu_func=None, length=None):
     """Used for when user needs to input words
