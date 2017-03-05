@@ -29,6 +29,7 @@ from queries import (
 def compose_tweet(conn, user, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
+
     :param conn: session connection
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
@@ -218,6 +219,7 @@ class TweetSearch:
         return True if len(self.rows) > 0 else False
 
     def add_tweets(self):
+        """Adds tweets from the 5 currently displayed tweets to a list"""
         self.tweets = []
         for row in self.rows:
             tweet = Tweet(self.conn, self.user, data=row)
@@ -234,6 +236,7 @@ class TweetSearch:
         self.add_tweets()
 
     def more_tweets_exist(self):
+        """Return true if more tweets can be displayed"""
         return self.more_exist
 
     def display_tweets(self):
