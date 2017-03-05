@@ -1,30 +1,6 @@
 from constants import SELECT, TODAY
-
-from utils import (
-    convert_date, 
-    display_selections, 
-    validate_str,
-    validate_num,
-    validate_yn,
-    press_enter
-)
-
-from queries import (
-    get_name,
-    select,
-    follows_tweets,
-    get_rep_cnt,
-    get_ret_cnt,
-    get_user_from_tid,
-    get_text_from_tid,
-    already_retweeted,
-    insert_retweet,
-    insert_tweet,
-    insert_mention,
-    insert_hashtag,
-    tid_exists,
-    hashtag_exists,
-)
+from utils import *
+from queries import * 
 
 def compose_tweet(conn, user, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
@@ -51,7 +27,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     else:
         insert_tweet(conn, new_tweet.get_values())
         print("Tweet %d created." % (new_tweet.id))
-        press_enter()
+        utils.press_enter()
 
     new_tweet.set_terms()
 
@@ -192,7 +168,7 @@ class Tweet:
 
 class TweetSearch:
 
-    def __init__(self, session, user):
+    def __init__(self, session, user, keywords=''):
         """Can be used for getting tweets of users being 
         followed or searching for specific tweets based on keywords
          
@@ -202,23 +178,30 @@ class TweetSearch:
         self.session = session
         self.conn = session.get_conn() 
         self.user = user
+        self.tweetCurs = self.conn.cursor()
         self.all_tweets = []
         self.tweets = []
         self.more_exist = False
         self.tweet_index = 5
         self.rows = None
-        self.tweetCurs = None
+        self.keywords = keywords.split() 
+
+    def get_search_tweets(self):
+        match_keywords(self.tweetCurs, self.keywords, 'tweets', 'text')
+        self.rows = self.tweetCurs.fetchmany(5)
+
+        for row in self.rows:
+            print(row) 
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed
     
         Returns cursor object or None if user has no tweets
         """
-        self.tweetCurs = self.conn.cursor()
         follows_tweets(self.tweetCurs, self.user)
-
+ 
         self.all_tweets = self.tweetCurs.fetchall()
-        self.more_tweets()
+        self.more_tweets() 
         self.add_tweets()
        
         return True if len(self.rows) > 0 else False
@@ -231,10 +214,9 @@ class TweetSearch:
             self.tweets.append(tweet)
 
     def more_tweets(self):
-        """
-        Gets the next 5 tweets from users who are being followed
-        """
+        """Gets the next 5 tweets from users who are being followed"""
         assert(self.tweetCurs is not None), 'Unable to select more tweets'
+
         self.rows = self.all_tweets[self.tweet_index - 5:self.tweet_index]
         self.more_exist = len(self.all_tweets) - self.tweet_index > 0
         self.tweet_index += 5
@@ -310,4 +292,4 @@ class TweetSearch:
             tweet = self.tweets[choice]
             tweet.display_stats()
             self.select_tweet(tweet)
-            
+

@@ -3,7 +3,7 @@ import sys
 from connect import get_connection
 from constants import BORDER, SELECT
 from utils import display_selections, validate_str, validate_num
-from queries import insert_user, find_user, user_exists, select, create_tStat, tStat_exists
+from queries import * 
 from tweet import TweetSearch, compose_tweet
 
 """
@@ -164,7 +164,7 @@ class Session:
                 self.tweets.choose_tweet()
             elif choices[choice] == 'See more tweets':
                 more_tweets()
-            elif choices[choice] == 'Search tweet':
+            elif choices[choice] == 'Search tweets':
                 search_tweets()
             elif choices[choice] == 'Search users':
                 search_users()
@@ -183,6 +183,10 @@ class Session:
                 self.tweets.choose_tweet()
             elif choices[choice] == 'See more tweets':
                 self.tweets.more_tweets()
+            elif choices[choice] == 'Search tweets':
+                search = validate_str("Enter keywords: ", self.home)
+                s_tweets = TweetSearch(self, self.username, search)
+                s_tweets.get_search_tweets()
             elif choices[choice] == 'Compose tweet':
                 compose_tweet(self.conn, self.username, self.home)
             elif choices[choice] == 'Logout':
