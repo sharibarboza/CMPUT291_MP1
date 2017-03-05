@@ -27,6 +27,12 @@ def check_quit(user_input):
     """
     return user_input.lower() in ['quit', 'q', 'exit']
 
+def exit_input(choice, menu_func):
+    if menu_func is None:
+        return choice
+    else:
+        return menu_func()
+
 def press_enter(prompt="Press Enter to continue."):
     """Requires user to press enter key before continuing
 
@@ -47,8 +53,8 @@ def validate_str(prompt, menu_func=None, length=None):
 
     while not valid:
         usr_input = input(prompt)
-        if menu_func and check_quit(usr_input):
-            menu_func()
+        if check_quit(usr_input):
+            exit_input(usr_input, menu_func) 
         if length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
@@ -74,8 +80,8 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     while not valid:
         try:
             choice = input(prompt)
-            if menu_func and check_quit(choice):
-                menu_func()
+            if check_quit(choice):
+                exit_input(choice, menu_func) 
             if num_type == 'int':
                 choice = int(choice)
             else:
