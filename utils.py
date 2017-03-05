@@ -23,6 +23,9 @@ def display_selections(selections):
 def check_quit(user_input):
     return user_input.lower() in ['quit', 'q', 'exit']
 
+def press_enter(prompt="Press Enter to continue."):
+    input(prompt)
+
 def validate_str(prompt, menu_func=None, length=None):
     """Used for when user needs to input words
     Commonly used for validating insert values   

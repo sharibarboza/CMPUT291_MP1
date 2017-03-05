@@ -6,6 +6,7 @@ from utils import (
     validate_str,
     validate_num,
     validate_yn,
+    press_enter
 )
 
 from queries import (
@@ -49,6 +50,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     else:
         insert_tweet(conn, new_tweet.get_values())
         print("Tweet %d created." % (new_tweet.id))
+        press_enter()
 
     new_tweet.set_terms()
 
@@ -144,6 +146,7 @@ class Tweet:
             print("Retweeted - %s" % (TODAY))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
+            press_enter()
 
     def get_values(self):
         """Returns a list of tid, writer, tdate, text, and replyto"""
