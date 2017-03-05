@@ -28,6 +28,11 @@ def check_quit(user_input):
     return user_input.lower() in ['quit', 'q', 'exit']
 
 def exit_input(choice, menu_func):
+    """Determines what to return when a user quits an input prompt
+    
+    :param menu_func: the function to return to
+    :param choice: the user input
+    """
     if menu_func is None:
         return choice
     else:

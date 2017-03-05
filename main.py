@@ -17,9 +17,9 @@ class Session:
     def __init__(self):
         """Establishes a connection with cx_Oracle and logs in user"""
  
-        self.username = None	    
-        self.conn = get_connection("sql_login.txt")
+        self.conn = self.connect() 
         self.curs = self.conn.cursor()
+        self.username = None
         self.tweets = None
         self.tweets_exist = False
 
@@ -27,6 +27,15 @@ class Session:
             create_tStat(self.curs)
 
         self.start_up()
+
+    def connect(self):
+        """ Get connection with filename 
+        File should include username and password to log into Oracle
+        """
+        if len(sys.argv) > 1:
+            return get_connection(sys.argv[1])
+        else:
+            return get_connection('sql_login.txt')
         
     def get_conn(self):
         """Return the connection"""
@@ -55,6 +64,8 @@ class Session:
         else:
             self.exit()
 
+        self.get_home_tweets()
+
     def exit(self):
         """Exit from the system and close database"""
         self.curs.close()
@@ -79,8 +90,6 @@ class Session:
 
         if self.username is None:
             self.start_up()
-        else:
-            self.get_home_tweets()
 
     def logout(self):
         """Logs user out of the system. Closes all cursors/connections"""
