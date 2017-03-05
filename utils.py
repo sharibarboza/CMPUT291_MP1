@@ -10,6 +10,16 @@ def convert_date(date_obj):
     """
     return datetime.strftime(date_obj, "%b %d %Y")
 
+def convert_keywords(keywords):
+    """Takes in string input from user, replaces commas, and converts to list
+
+    :param keywords: list of tokenized strings
+    """
+    keywords = keywords.replace(',','')
+    keywords = keywords.split()
+
+    return [word.lower() for word in keywords] 
+
 def display_selections(selections):
     """Helper method for easily displaying numbered lists   
  
@@ -28,6 +38,11 @@ def check_quit(user_input):
     return user_input.lower() in ['quit', 'q', 'exit']
 
 def exit_input(choice, menu_func):
+    """Determines what to return when a user quits an input prompt
+    
+    :param menu_func: the function to return to
+    :param choice: the user input
+    """
     if menu_func is None:
         return choice
     else:

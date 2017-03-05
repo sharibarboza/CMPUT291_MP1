@@ -125,6 +125,16 @@ def user_exists(curs, user):
     curs.execute('select usr from users where usr=:1', [user])
     return curs.fetchone() is not None 
 
+def follows_exists(curs, flwer, flwee):
+    """ Checks if a follows relationship exists in the database
+
+    :param curs: cursor object
+    :param flwer: follower user id
+    :param flwee: followee user id
+    """
+    curs.execute('select * from follows where flwer=:1 and flwee=:2', [flwer, flwee])
+    return curs.fetchone() is not None
+
 def tid_exists(curs, tid):
     """ Checks if a tweet id exists in the database
     
@@ -152,6 +162,15 @@ def mention_exists(curs, tid, term):
     """
     curs.execute('select term from mention where tid=:1 and term=:2',
         [tid, term])
+    return curs.fetchone() is not None
+
+def list_exists(curs, lname):
+    """ Checks if a list exists in the database
+ 
+    :param curs: cursor object
+    :param lname: list name
+    """
+    curs.execute('select lname from lists where lname=:1', [lname])
     return curs.fetchone() is not None 
 
 def select(curs, table):
@@ -221,7 +240,7 @@ def create_tStat(curs):
 
 def tStat_exists(curs):
     curs.execute("select view_name from user_views where view_name='TSTAT'")
-    return curs.fetchone()[0] is not None
+    return curs.fetchone() is not None
 
 def get_rep_cnt(curs, tid):
     """ Get the reply count of a specific tweet
@@ -250,3 +269,39 @@ def already_retweeted(curs, user, tid):
     """
     curs.execute('select * from retweets where usr=:1 and tid=:2', [user, tid])
     return False if curs.fetchone() is None else True
+
+def match_tweet(curs, keywords, order):
+    """Matches tweets who satisfy at least one keyword 
+
+    :param curs: cursor object
+    :param keywords: list of tokenized words
+    :param order: what to order results by
+    """
+    if len(keywords) == 0:
+        return
+
+    q = "select * from tweets where lower(text) like '%%' || :1 || '%%'"
+
+    for i in range(2, len(keywords) + 1): 
+       q += " or lower(text) like '%%' || :%d || '%%'" % (i) 
+    q += " order by %s desc" % (order)   
+    
+    curs.execute(q, keywords)
+
+def match_name(curs, keyword):
+    """Matches users whose names contain the keyword
+
+    :param curs: cursor object
+    :param keywords: input string (e.g. 'John', 'John Doe') 
+    """
+    curs.execute("select * from users where lower(name) like "
+        "'%%' || :1 || '%%' order by length(name) asc", keyword) 
+
+def match_city(curs, keyword):
+    """Matches users who city contains the keyword
+
+    :param curs: cursor object
+    :param keyword: list of tokenized words (e.g. 'New York')
+    """
+    curs.execute("select * from users where lower(city) like "
+        "'%%' || :1 || '%%' order by length(city) asc", keyword)        
