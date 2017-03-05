@@ -101,6 +101,9 @@ class Tweet:
         self.ret_cnt = get_ret_cnt(self.curs, self.id)
         self.writer_name = get_name(self.curs, self.writer)
 
+    def get_id(self):
+        return self.id
+
     def display(self, user=None):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
@@ -131,10 +134,15 @@ class Tweet:
         print("Number of replies: %s" % (self.rep_cnt))
         print("Number of retweets: %s" % (self.ret_cnt))
 
-    def retweet(self):
-        """Allows logged in user to retweet a selected tweet and 
-        insert retweet into the database
+    def reply(self, menu_func):
+        """Reply to the Tweet
+
+        :param menu_func: return point if user decides to cancel reply
         """
+        compose_tweet(self.conn, self.user, menu_func, replyto=self.id)
+
+    def retweet(self):
+        """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
             print("You already retweeted this tweet.")
             return
@@ -264,7 +272,7 @@ class TweetSearch:
 
         return choices
 
-    def select_tweet(self):
+    def select_tweet(self, tweet):
         """Prompt user to choose one of the displayed tweets
         
         Returns selected option from tweet menu 
@@ -275,9 +283,9 @@ class TweetSearch:
             choice = validate_num(SELECT, self.session.home, size=len(choices))
 
             if choice == 1:
-                compose_tweet(self.conn, self.user, self.choose_tweet)
+                tweet.reply(self.choose_tweet)
             elif choice == 2:
-                self.retweet()                    
+                tweet.retweet()                    
             elif choice == 3:
                 choice = self.choose_tweet()
 
@@ -304,5 +312,5 @@ class TweetSearch:
         else:
             tweet = self.tweets[choice]
             tweet.display_stats()
-            self.select_tweet()
+            self.select_tweet(tweet)
             
