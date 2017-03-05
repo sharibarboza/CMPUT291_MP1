@@ -240,7 +240,7 @@ def create_tStat(curs):
 
 def tStat_exists(curs):
     curs.execute("select view_name from user_views where view_name='TSTAT'")
-    return curs.fetchone()[0] is not None
+    return curs.fetchone() is not None
 
 def get_rep_cnt(curs, tid):
     """ Get the reply count of a specific tweet
