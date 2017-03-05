@@ -48,6 +48,18 @@ def generate_tid(conn):
     return new_tid
 
 
+def search_tweets(session, user):
+    """Match tweets to user's keywords
+
+    :param session: session connection
+    :param user: logged in user id
+    """
+    search_input = validate_str("Enter keywords: ", session.home)
+    s_tweets = TweetSearch(session, user, search_input)
+    s_tweets.get_search_tweets()
+    return s_tweets 
+
+
 class Tweet:
 
     def __init__(self, conn, user, data):
@@ -187,11 +199,8 @@ class TweetSearch:
         self.keywords = keywords.split() 
 
     def get_search_tweets(self):
-        match_keywords(self.tweetCurs, self.keywords, 'tweets', 'text')
-        self.rows = self.tweetCurs.fetchmany(5)
-
-        for row in self.rows:
-            print(row) 
+        match_keywords(self.tweetCurs, self.keywords, 'tweets', 'text', 'tdate')
+        self.get_all_tweets()
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed
@@ -199,12 +208,12 @@ class TweetSearch:
         Returns cursor object or None if user has no tweets
         """
         follows_tweets(self.tweetCurs, self.user)
- 
+        self.get_all_tweets() 
+
+    def get_all_tweets(self):
         self.all_tweets = self.tweetCurs.fetchall()
-        self.more_tweets() 
+        self.more_tweets()
         self.add_tweets()
-       
-        return True if len(self.rows) > 0 else False
 
     def add_tweets(self):
         """Adds tweets from the 5 currently displayed tweets to a list"""
@@ -221,6 +230,10 @@ class TweetSearch:
         self.more_exist = len(self.all_tweets) - self.tweet_index > 0
         self.tweet_index += 5
         self.add_tweets()
+  
+    def tweets_exist(self):
+        """Return true if user has tweets to display"""
+        return True if len(self.rows) > 0 else False
 
     def more_tweets_exist(self):
         """Return true if more tweets can be displayed"""
@@ -232,9 +245,8 @@ class TweetSearch:
             print("Tweet %d" % (i + 1))
             tweet = self.tweets[i]
    
-            rt_user = row[5]
-            if tweet.writer != rt_user: 
-                tweet.display(rt_user)
+            if len(row) > 5 and tweet.writer != row[5]: 
+                tweet.display(row[5])
             else:
                 tweet.display() 
 

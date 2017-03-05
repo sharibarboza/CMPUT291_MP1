@@ -270,21 +270,23 @@ def already_retweeted(curs, user, tid):
     curs.execute('select * from retweets where usr=:1 and tid=:2', [user, tid])
     return False if curs.fetchone() is None else True
 
-def match_keywords(curs, keywords, table, value):
+def match_keywords(curs, keywords, table, value, order):
     """Matches keywords to a specific attribute in a table
 
     :param curs: cursor object
     :param keywords: list of tokenized words
     :param table: the table to search in
     :param value: the value to compare keywords to
+    :param order: what to order results by
     """
     if len(keywords) == 0:
         return
 
     query_str = "select * from %s where %s like '%%' || :1 || '%%'" % (table, value)
 
-    for i in range(2, len(keywords)): 
-       query_str += " or %s like '%%' || :d || '%%'" % (value, i) 
+    for i in range(2, len(keywords) + 1): 
+       query_str += " or %s like '%%' || :%d || '%%'" % (value, i) 
+    query_str += " order by %s desc" % (order)   
     
     curs.execute(query_str, keywords) 
             

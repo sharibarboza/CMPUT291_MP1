@@ -4,7 +4,7 @@ from connect import get_connection
 from constants import BORDER, SELECT
 from utils import display_selections, validate_str, validate_num
 from queries import * 
-from tweet import TweetSearch, compose_tweet
+from tweet import TweetSearch, compose_tweet, search_tweets
 
 """
 CMPUT 291 Mini Project 1
@@ -21,7 +21,7 @@ class Session:
         self.curs = self.conn.cursor()
         self.username = None
         self.tweets = None
-        self.tweets_exist = False
+        self.s_tweets = None      
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
@@ -122,10 +122,10 @@ class Session:
 
     def get_home_tweets(self):
         self.tweets = TweetSearch(self, self.username)
-        self.tweets_exist = self.tweets.get_user_tweets()
+        self.tweets.get_user_tweets()
         self.home()
 
-    def _main_menu(self):
+    def _main_menu(self, t):
         """Displays the main functionality menu
     
         :param curs: cursor object
@@ -140,10 +140,10 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if self.tweets_exist:
+        if t.tweets_exist:
             choices.insert(0, "Select a tweet")
     
-            if self.tweets.more_tweets_exist():
+            if t.more_tweets_exist():
                 choices.insert(1, "See more tweets")
     
         display_selections(choices)
@@ -153,43 +153,47 @@ class Session:
         """Displays main system functionalities menu"""
         while True:
             print(BORDER)
-            self.tweets.display_tweets()
-            choices = self._main_menu()
+           
+            t = self.s_tweets if self.s_tweets else self.tweets
+            t.display_tweets()
+            choices = self._main_menu(t)
             choice = validate_num(SELECT, self.start_up, size=len(choices)) - 1
+            option = choices[choice]
+
+            if self.s_tweets and option not in ['Select a tweet', 'See more tweets']:
+                self.s_tweets = None
 
             """
             Main outline for program
 
-            if choices[choice] == 'Select a tweet':
+            if option  == 'Select a tweet':
                 self.tweets.choose_tweet()
-            elif choices[choice] == 'See more tweets':
+            elif option == 'See more tweets':
                 more_tweets()
-            elif choices[choice] == 'Search tweets':
+            elif option == 'Search tweets':
                 search_tweets()
-            elif choices[choice] == 'Search users':
+            elif option == 'Search users':
                 search_users()
-            elif choices[choice] == 'Compose tweet':
+            elif option == 'Compose tweet':
                 compose_tweet()
-            elif choices[choice] == 'List followers':
+            elif option == 'List followers':
                 list_followers()
-            elif choices[choice] == 'Manage lists':
+            elif option == 'Manage lists':
                 manage_lists()
-            elif choices[choice] == 'Logout':
+            elif option == 'Logout':
                 self.logout()
             """
 
             # Currently operating functionalties
-            if choices[choice] == 'Select a tweet':
-                self.tweets.choose_tweet()
-            elif choices[choice] == 'See more tweets':
-                self.tweets.more_tweets()
-            elif choices[choice] == 'Search tweets':
-                search = validate_str("Enter keywords: ", self.home)
-                s_tweets = TweetSearch(self, self.username, search)
-                s_tweets.get_search_tweets()
-            elif choices[choice] == 'Compose tweet':
+            if option == 'Select a tweet':
+                t.choose_tweet()
+            elif option == 'See more tweets':
+                t.more_tweets()
+            elif option == 'Search tweets':
+                self.s_tweets = search_tweets(self, self.username) 
+            elif option == 'Compose tweet':
                 compose_tweet(self.conn, self.username, self.home)
-            elif choices[choice] == 'Logout':
+            elif option == 'Logout':
                 self.logout()
 
    
