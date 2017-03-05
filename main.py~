@@ -21,14 +21,11 @@ class Session:
         self.conn = get_connection("sql_login.txt")
         self.curs = self.conn.cursor()
 
-        if not tStat_exists(self.curs):
+        if not tStat_exists:
             create_tStat(self.curs)
 
         # Keeping track of home page tweets
         self.tweetCurs = None
-        self.tweets = None
-
-        self.start_up()
         self.tweets = None
         
     def get_conn(self):
@@ -49,31 +46,22 @@ class Session:
         """
         choices = ["Login", "Sign up", "Exit"]
         display_selections(choices)
-        choice = validate_num(SELECT, self.exit, size=len(choices))
+        choice = validate_num(SELECT, size=len(choices))
 
         if choice == 1:
     	    self.login()
         elif choice == 2:
     	    self.signup()
         else:
-            self.exit()
-
-    def exit(self):
-        """Exit from the system and close database"""
-        self.curs.close()
-
-        if self.tweetCurs:
-            self.tweetCurs.close()
-
-        self.conn.close()
-        sys.exit()
+            self.conn.close()
+            sys.exit()
 
     def login(self):
         """Allows returning user to sign in. Will return to the start
         up screen if login fails
         """
-        self.username = validate_num("Enter username: ", self.start_up)
-        password = validate_str("Enter password: ", self.start_up, 4)
+        self.username = validate_num("Enter username: ")
+        password = input("Enter password: ")
         row = find_user(self.curs, self.username, password)
 
         if row is None:
@@ -83,25 +71,29 @@ class Session:
             name = row[2].rstrip()
             first_name = name.split()[0]
             print("Welcome back, %s." % (first_name))
+            self.tweets = TweetSearch(self, self.username)
 
         if self.username is None:
             self.start_up()
-        else:
-            self.get_home_tweets()
 
     def logout(self):
         """Logs user out of the system. Closes all cursors/connections"""
+        self.curs.close()
+
+        if self.tweetCurs:
+            self.tweetCurs.close()
+
         print("Logged out.")
-        self.start_up()
+        main()
 
     def signup(self):
         """Creates a new user and inserts user into the database"""
         self.username = self.generate_user()
-        name = validate_str("Enter your name: ", self.start_up, 20)
-        email = validate_str("Enter your email: ", self.start_up, 15)
-        city = validate_str("Enter your city: ", self.start_up, 12)
-        timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
-        password = validate_str("Enter your password: ", self.start_up, 4)
+        name = validate_str("Enter your name: ", 20)
+        email = validate_str("Enter your email: ", 15)
+        city = validate_str("Enter your city: ", 12)
+        timezone = float(validate_num("Enter your timezone: "))
+        password = validate_str("Enter your password: ", 4)
 
         print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
 
@@ -117,10 +109,6 @@ class Session:
         while user_exists(self.curs, new_usr): 
             new_usr += 1
         return new_usr
-
-    def get_home_tweets(self):
-        self.tweets = TweetSearch(self, self.username)
-        self.home()
 
     def main_menu(self):
         """Displays the main functionality menu
@@ -153,35 +141,34 @@ class Session:
             print(BORDER)
             self.tweetCurs = self.tweets.get_user_tweets()
             choices = self.main_menu()
-            choice = validate_num(SELECT, self.exit, size=len(choices)) - 1
+            choice = validate_num(SELECT, size=len(choices)) 
 
             """
             Main outline for program
-
-            if choices[choice] == 'Select a tweet':
-                self.tweets.choose_tweet()
-            elif choices[choice] == 'See more tweets':
+            if choice == 1:
+                self.tweets.select_tweet()
+            elif choice == 2:
                 more_tweets()
-            elif choices[choice] == 'Search tweet':
+            elif choice == 3:
                 search_tweets()
-            elif choices[choice] == 'Search users':
+            elif choice == 4:
                 search_users()
-            elif choices[choice] == 'Compose tweet':
+            elif choice == 5:
                 compose_tweet()
-            elif choices[choice] == 'List followers':
+            elif choice == 6:
                 list_followers()
-            elif choices[choice] == 'Manage lists':
-                manage_lists()
-            elif choices[choice] == 'Logout':
-                self.logout()
+            elif choice == 7:
+                manage_lists(session)
+            elif choice == 8:
+                more_tweets()
             """
 
             # Currently operating functionalties
-            if choices[choice] == 'Select a tweet':
-                self.tweets.choose_tweet()
-            elif choices[choice] == 'Compose tweet':
-                compose_tweet(self.conn, self.username, self.home)
-            elif choices[choice] == 'Logout':
+            if choice == 1:
+                self.tweets.select_tweet()
+            elif choice == 5:
+                compose_tweet(self.conn, self.username)
+            elif choice == 8:
                 self.logout()
 
    
@@ -190,7 +177,10 @@ class Session:
 def main():
     # Log in/sign up user into database
     session = Session()
+    session.start_up()
     conn = session.get_conn()
+    
+    session.home()
 
     # Log out of the database system
     session.logout()

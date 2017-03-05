@@ -3,6 +3,7 @@ from constants import SELECT, TODAY
 from utils import (
     convert_date, 
     display_selections, 
+    validate_str,
     validate_num,
     validate_yn,
 )
@@ -24,14 +25,14 @@ from queries import (
     hashtag_exists,
 )
 
-def compose_tweet(conn, user, replyto=None):
+def compose_tweet(conn, user, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
     :param conn: session connection
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
-    text = input("Enter tweet: ")
+    text = validate_str("Enter tweet: ", menu_func=menu_func)
     writer = user
     tid = generate_tid(conn)
     date = TODAY
@@ -126,22 +127,6 @@ class Tweet:
 
         print("Number of replies: %s" % (self.rep_cnt))
         print("Number of retweets: %s" % (self.ret_cnt))
-
-    def tweet_menu(self):
-        """Displays options to reply or retweet a tweet after it has 
-        been selected
-        Returns the selected option from the tweet menu
-        """
-        choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
-        display_selections(choices)
-        choice = validate_num(SELECT, size=len(choices))
-
-        if choice == 1:
-            compose_tweet(self.conn, self.user)
-        elif choice == 2:
-            self.retweet()
-            
-        return choice
 
     def retweet(self):
         """Allows logged in user to retweet a selected tweet and 
@@ -243,29 +228,38 @@ class TweetSearch:
         if len(self.rows) == 0:
             print("You have no tweets yet.")
 
+    def tweet_menu(self):
+        """Displays options to reply or retweet a tweet after it has 
+        been selected
+        Returns the selected option from the tweet menu
+        """
+        choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
+        display_selections(choices)
+
+        return choices
+
     def select_tweet(self):
         """Prompt user to choose one of the displayed tweets
         
         Returns selected option from tweet menu 
         """
-        tweet_num = self.choose_tweet()
-        tweet = self.tweets[tweet_num - 1]
-        tweet.display_stats()
- 
-        # Display the tweet menu
         choice = 0
         while choice < 4:
-            choice = tweet.tweet_menu()
-            
-            if choice == 3:
-                choice = self.select_tweet() 
+            choices = self.tweet_menu()
+            choice = validate_num(SELECT, self.session.home, size=len(choices))
+
+            if choice == 1:
+                compose_tweet(self.conn, self.user, self.choose_tweet)
+            elif choice == 2:
+                self.retweet()                    
+            elif choice == 3:
+                choice = self.select_tweet()
 
         if choice == 4:
             self.session.home()
         else:
             self.session.logout()
             
-
     def choose_tweet(self):
         """Returns the number of the tweet the user wants to select"""
         choices = []
@@ -273,5 +267,16 @@ class TweetSearch:
             tweet_str = "Tweet %d" % (i)
             choices.append(tweet_str)
 
+        choices.extend(["Home", "Logout"])
         display_selections(choices)
-        return validate_num(SELECT, size=len(choices))
+        choice = validate_num(SELECT, self.session.home, size=len(choices)) - 1
+
+        if choices[choice] == 'Home':
+            self.session.home()
+        elif choices[choice] == 'Logout':
+            self.session.logout()
+        else:
+            tweet = self.tweets[choice]
+            tweet.display_stats()
+            self.select_tweet()
+            

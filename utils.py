@@ -20,11 +20,15 @@ def display_selections(selections):
     	print("%d. %s" % (i, choice))
     print(BORDER)
 
-def validate_str(prompt, length=None):
+def check_quit(user_input):
+    return user_input.lower() in ['quit', 'q', 'exit']
+
+def validate_str(prompt, menu_func=None, length=None):
     """Used for when user needs to input words
     Commonly used for validating insert values   
  
     :param prompt: string message
+    :param prompt: if user enters quit, return to this function
     :param length (optional): restricts the number of characters
     """
     valid = False
@@ -32,6 +36,8 @@ def validate_str(prompt, length=None):
 
     while not valid:
         usr_input = input(prompt)
+        if menu_func and check_quit(usr_input):
+            menu_func()
         if length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
@@ -40,23 +46,35 @@ def validate_str(prompt, length=None):
 
     return usr_input
 
-def validate_num(prompt, size=None):
+def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     """Used for when user needs to input a single number
     Used mainly for menu selections
     
     :param prompt: string message
-    :param size: specifies range of numbers based on available selections
+    :param menu_func: if user enters quit, return to this function
+    :param size (optional): specifies range of numbers based on available selections
+    :param num_type (optional): validate either integer or float (default: integer) 
     """
+    assert(num_type=='int' or num_type=='float'), "type must be either int or float"
+
     valid = False
     choice = None
 
     while not valid:
         try:
-            choice = int(input(prompt))
+            choice = input(prompt)
+            if menu_func and check_quit(choice):
+                menu_func()
+            if num_type == 'int':
+                choice = int(choice)
+            else:
+                choice = float(choice)
             if size and choice not in range(1, size+1):
                 raise ValueError
         except ValueError:
-            if size:
+            if choice.lower() == 'quit':
+                return
+            elif size:
                 print("Selection must be a number from 1 to %d." % (size))
             else:
                 print("Please enter a number.")
@@ -64,7 +82,10 @@ def validate_num(prompt, size=None):
         else:
             valid = True
 
-    return choice
+    if num_type == 'int':
+        return int(choice)
+    else:
+        return float(choice)
 
 def validate_yn(prompt):
     """Used for when prompting the user to enter either y/yes or n/no
