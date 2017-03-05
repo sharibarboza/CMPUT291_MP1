@@ -282,11 +282,11 @@ def match_keywords(curs, keywords, table, value, order):
     if len(keywords) == 0:
         return
 
-    query_str = "select * from %s where %s like '%%' || :1 || '%%'" % (table, value)
+    q = "select * from %s where lower(%s) like '%%' || :1 || '%%'" % (table, value)
 
     for i in range(2, len(keywords) + 1): 
-       query_str += " or %s like '%%' || :%d || '%%'" % (value, i) 
-    query_str += " order by %s desc" % (order)   
+       q += " or lower(%s) like '%%' || :%d || '%%'" % (value, i) 
+    q += " order by %s desc" % (order)   
     
-    curs.execute(query_str, keywords) 
+    curs.execute(q, keywords) 
             

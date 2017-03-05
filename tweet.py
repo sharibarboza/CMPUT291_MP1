@@ -196,21 +196,20 @@ class TweetSearch:
         self.more_exist = False
         self.tweet_index = 5
         self.rows = None
-        self.keywords = keywords.split() 
+        self.keywords = convert_keywords(keywords) 
 
     def get_search_tweets(self):
+        """Find tweets matching keywords"""
         match_keywords(self.tweetCurs, self.keywords, 'tweets', 'text', 'tdate')
         self.get_all_tweets()
 
     def get_user_tweets(self):
-        """Find tweets/retweets from users who are being followed
-    
-        Returns cursor object or None if user has no tweets
-        """
+        """Find tweets/retweets from users who are being followed"""
         follows_tweets(self.tweetCurs, self.user)
         self.get_all_tweets() 
 
     def get_all_tweets(self):
+        """Fetches all tweet query results"""
         self.all_tweets = self.tweetCurs.fetchall()
         self.more_tweets()
         self.add_tweets()
@@ -231,14 +230,6 @@ class TweetSearch:
         self.tweet_index += 5
         self.add_tweets()
   
-    def tweets_exist(self):
-        """Return true if user has tweets to display"""
-        return True if len(self.rows) > 0 else False
-
-    def more_tweets_exist(self):
-        """Return true if more tweets can be displayed"""
-        return self.more_exist
-
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
         for i, row in enumerate(self.rows):
@@ -304,4 +295,13 @@ class TweetSearch:
             tweet = self.tweets[choice]
             tweet.display_stats()
             self.select_tweet(tweet)
+
+    def tweets_exist(self):
+        """Return true if user has tweets to display"""
+        return True if len(self.rows) > 0 else False
+
+    def more_tweets_exist(self):
+        """Return true if more tweets can be displayed"""
+        return self.more_exist
+
 
