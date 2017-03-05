@@ -200,7 +200,7 @@ class TweetSearch:
 
     def get_search_tweets(self):
         """Find tweets matching keywords"""
-        match_keywords(self.tweetCurs, self.keywords, 'tweets', 'text', 'tdate')
+        match_tweet(self.tweetCurs, self.keywords, 'tdate')
         self.get_all_tweets()
 
     def get_user_tweets(self):

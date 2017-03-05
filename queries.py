@@ -270,23 +270,38 @@ def already_retweeted(curs, user, tid):
     curs.execute('select * from retweets where usr=:1 and tid=:2', [user, tid])
     return False if curs.fetchone() is None else True
 
-def match_keywords(curs, keywords, table, value, order):
-    """Matches keywords to a specific attribute in a table
+def match_tweet(curs, keywords, order):
+    """Matches tweets who satisfy at least one keyword 
 
     :param curs: cursor object
     :param keywords: list of tokenized words
-    :param table: the table to search in
-    :param value: the value to compare keywords to
     :param order: what to order results by
     """
     if len(keywords) == 0:
         return
 
-    q = "select * from %s where lower(%s) like '%%' || :1 || '%%'" % (table, value)
+    q = "select * from tweets where lower(text) like '%%' || :1 || '%%'"
 
     for i in range(2, len(keywords) + 1): 
-       q += " or lower(%s) like '%%' || :%d || '%%'" % (value, i) 
+       q += " or lower(text) like '%%' || :%d || '%%'" % (i) 
     q += " order by %s desc" % (order)   
     
-    curs.execute(q, keywords) 
-            
+    curs.execute(q, keywords)
+
+def match_name(curs, keyword):
+    """Matches users whose names contain the keyword
+
+    :param curs: cursor object
+    :param keywords: input string (e.g. 'John', 'John Doe') 
+    """
+    curs.execute("select * from users where lower(name) like "
+        "'%%' || :1 || '%%' order by length(name) asc", keyword) 
+
+def match_city(curs, keyword):
+    """Matches users who city contains the keyword
+
+    :param curs: cursor object
+    :param keyword: list of tokenized words (e.g. 'New York')
+    """
+    curs.execute("select * from users where lower(city) like "
+        "'%%' || :1 || '%%' order by length(city) asc", keyword)        
