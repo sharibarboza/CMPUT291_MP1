@@ -31,7 +31,7 @@ def press_enter(prompt="Press Enter to continue."):
     """Requires user to press enter key before continuing
 
     :param: string message
-    """"
+    """
     input(prompt)
 
 def validate_str(prompt, menu_func=None, length=None):
