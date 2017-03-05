@@ -150,7 +150,7 @@ class Session:
         return choices
 
     def home(self):
-    # Display main system functionalities menu
+        """Displays main system functionalities menu"""
         while True:
             print(BORDER)
             self.tweets.display_tweets()

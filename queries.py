@@ -125,6 +125,16 @@ def user_exists(curs, user):
     curs.execute('select usr from users where usr=:1', [user])
     return curs.fetchone() is not None 
 
+def follows_exists(curs, flwer, flwee):
+    """ Checks if a follows relationship exists in the database
+
+    :param curs: cursor object
+    :param flwer: follower user id
+    :param flwee: followee user id
+    """
+    curs.execute('select * from follows where flwer=:1 and flwee=:2', [flwer, flwee])
+    return curs.fetchone() is not None
+
 def tid_exists(curs, tid):
     """ Checks if a tweet id exists in the database
     
@@ -152,6 +162,15 @@ def mention_exists(curs, tid, term):
     """
     curs.execute('select term from mention where tid=:1 and term=:2',
         [tid, term])
+    return curs.fetchone() is not None
+
+def list_exists(curs, lname):
+    """ Checks if a list exists in the database
+ 
+    :param curs: cursor object
+    :param lname: list name
+    """
+    curs.execute('select lname from lists where lname=:1', [lname])
     return curs.fetchone() is not None 
 
 def select(curs, table):
