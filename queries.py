@@ -122,7 +122,7 @@ def user_exists(curs, user):
     :param curs: cursor object
     :param user: user id (must be a number)
     """
-    curs.execute('select usr from users where usr=:1', [user])
+    curs.execute("select usr from users where usr like '%%' || :1 || '%%'", [user])
     return curs.fetchone() is not None 
 
 def follows_exists(curs, flwer, flwee):
@@ -150,7 +150,7 @@ def hashtag_exists(curs, term):
     :param curs: cursor object
     :param term: hashtag word
     """
-    curs.execute('select term from hashtags where term=:1', [term])
+    curs.execute("select term from hashtags where term like '%%' || :1 || '%%'", [term])
     return curs.fetchone() is not None
 
 def mention_exists(curs, tid, term):
@@ -160,7 +160,7 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute('select term from mention where tid=:1 and term=:2',
+    curs.execute("select term from mention where tid=:1 and term like '%%' || :2 || '%%'",
         [tid, term])
     return curs.fetchone() is not None
 
