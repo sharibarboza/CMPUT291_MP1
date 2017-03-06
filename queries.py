@@ -171,7 +171,8 @@ def list_exists(curs, lname, owner):
     :param lname: list name
     :param owner: user id of list owner
     """
-    curs.execute('select * from lists where lname=:1 and owner=:2', [lname, owner])
+    curs.execute("select * from lists where lname like '%%' || :1 || '%%' " 
+ 	"and owner=:2", [lname, owner])
     return curs.fetchone() is not None 
 
 def select(curs, table):
