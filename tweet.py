@@ -10,6 +10,25 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
+    new_tweet = create_tweet(conn, user, replyto, menu_func)
+ 
+    confirm = validate_yn("Confirm tweet? y/n: ")
+    if confirm in ["n", "no"]:
+        print("Tweet cancelled.")
+        return None if menu_func is None else menu_func() 
+             
+    insert_tweet(conn, new_tweet.get_values())
+    new_tweet.insert_terms()
+    print("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
+    print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
+    press_enter()
+
+def create_tweet(conn, user, replyto, menu_func):
+    """Gets info for new tweet and creates new Tweet object
+
+    :param user: logged in user id
+    :param replyto: id of user to replyto or None
+    """
     text = validate_str("Enter tweet: ", menu_func=menu_func)
     writer = user
     tid = generate_tid(conn)
@@ -17,21 +36,17 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     replyto = replyto
     rt_user = None
     data = [tid, writer, date, text, replyto, rt_user]
+
     new_tweet = Tweet(conn, user, data)
+    new_tweet.set_terms()
     new_tweet.display()
 
-    confirm = validate_yn("Confirm tweet? y/n: ")
-    if confirm in ["n", "no"]:
-        print("Tweet cancelled.")
-        return
-    else:
-        insert_tweet(conn, new_tweet.get_values())
-        print("Tweet %d created." % (new_tweet.id))
-        utils.press_enter()
+    if not new_tweet.valid_terms():
+        return create_tweet(conn, user, replyto, menu_func)
+    
+    return new_tweet
 
-    new_tweet.set_terms()
-
-
+   
 def generate_tid(conn):
     """ Generates a new unique tweet id
     
@@ -88,6 +103,15 @@ class Tweet:
         self.rep_cnt = get_rep_cnt(self.curs, self.id)
         self.ret_cnt = get_ret_cnt(self.curs, self.id)
         self.writer_name = get_name(self.curs, self.writer)
+        self.terms = []
+
+    def tdate(self):
+        """Return the tweet date"""
+        return self.date_str
+
+    def tid(self):
+        """Return the tweet id"""
+        return self.id
 
     def display(self, user=None):
         """ Displays basic info on a tweet
@@ -137,7 +161,7 @@ class Tweet:
         if confirm in ["n", "no"]:
             print("Retweet cancelled.")
         else:
-            print("Retweeted - %s" % (TODAY))
+            print("Retweeted - %s" % (convert_date(TODAY)))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
             press_enter()
@@ -146,17 +170,37 @@ class Tweet:
         """Returns a list of tid, writer, tdate, text, and replyto"""
         return [self.id, self.writer, self.date, self.text, self.replyto]
 
+    def get_terms(self):
+        """Returns the list of hashtag terms for the tweet"""
+        return self.terms
+
     def set_terms(self):
-        """Finds the hashtags in a tweet and insert them into the
-        hashtags and mentions tables
-        """
-        hashtags = self.find_hashtags()
+        """Finds the hashtags in a tweet and returns the terms""" 
+        hashtags = self.find_hashtags() 
+
         for tag in hashtags:
             term = self.extract_term(tag)
-           
+            self.terms.append(term)
+        
+    def insert_terms(self):
+        """Inserts all hashtag terms into the hashtags table"""
+        for term in self.terms:
+            # Insert into hashtags table
             if not hashtag_exists(self.curs, term):
-                insert_hashtag(self.conn, term)     
-            insert_mention(self.conn, [self.id, term])
+                insert_hashtag(self.conn, term)      
+ 
+            # Insert into mentions table
+            if not mention_exists(self.curs, self.id, term):
+                insert_mention(self.conn, [self.id, term])
+ 
+    def valid_terms(self):
+        """Returns True if all terms do not exceed restriction length"""
+        for term in self.terms:
+            if len(term) > 10:
+                print("%s is too long. Must be 10 characters or less.\n" % (term))
+                self.terms = []
+                return False
+        return True
 
     def extract_term(self, index):
         """Gets the hashtag term in the tweet based on the index
@@ -168,7 +212,7 @@ class Tweet:
         if space_index < 0:
             space_index = len(self.text) + 1
 
-        return self.text[index + 1:space_index]
+        return self.text[index+1:space_index]
 
     def find_hashtags(self):
         """ Returns a list of all indexes of found hashtags"""

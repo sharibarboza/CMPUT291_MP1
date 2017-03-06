@@ -160,17 +160,19 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute('select term from mention where tid=:1 and term=:2',
+    curs.execute('select term from mentions where tid=:1 and term=:2',
         [tid, term])
     return curs.fetchone() is not None
 
-def list_exists(curs, lname):
+def list_exists(curs, lname, owner):
     """ Checks if a list exists in the database
  
     :param curs: cursor object
     :param lname: list name
+    :parm owner: list owner
     """
-    curs.execute('select lname from lists where lname=:1', [lname])
+    curs.execute('select lname from lists where lname=:1 and owner=:2',
+        [lname, owner])
     return curs.fetchone() is not None 
 
 def select(curs, table):

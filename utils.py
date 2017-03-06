@@ -10,7 +10,7 @@ def convert_date(date_obj):
     """
     return datetime.strftime(date_obj, "%b %d %Y")
 
-def convert_keywords(keywords):
+def convert_keywords(keywords, lower=True):
     """Takes in string input from user, replaces commas, and converts to list
 
     :param keywords: list of tokenized strings
@@ -18,7 +18,10 @@ def convert_keywords(keywords):
     keywords = keywords.replace(',','')
     keywords = keywords.split()
 
-    return [word.lower() for word in keywords] 
+    if lower:
+        return [word.lower() for word in keywords]
+    else:
+        return [word for word in keywords] 
 
 def display_selections(selections):
     """Helper method for easily displaying numbered lists   
