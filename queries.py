@@ -296,6 +296,7 @@ def match_tweet(curs, keywords, order):
             q += term_q % (i)
         else:
             q += text_q & (i, i)
+    q += " order by %s desc" % (order)
      
     curs.execute(q, keywords)
 

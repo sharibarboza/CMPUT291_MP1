@@ -274,12 +274,15 @@ class TweetSearch:
         self.more_tweets()
 
     def add_tweets(self):
-        """Adds tweets from the 5 currently displayed tweets to a list"""
+        """Adds tweets from the query resuls into the all_tweets list"""
         for row in self.tweetCurs.fetchall():
             tweet = Tweet(self.conn, self.user, data=row)
             self.all_tweets.append(tweet)
 
     def add_filtered_tweets(self):
+        """Remove tweets from all_tweets list if the tweet does not match
+        a keyword
+        """
         for row in self.tweetCurs.fetchall():
             tweet = Tweet(self.conn, self.user, data=row)
 
@@ -291,6 +294,10 @@ class TweetSearch:
                 self.all_tweets.append(tweet)
 
     def validate_tweet(self, tweet):
+        """Returns true if a keyword is not a hashtag and the tweet does not mention it
+
+        :param tweet: Tweet object
+        """
         tweet.set_terms()
         for word in self.keywords:
             if not is_hashtag(word) and word in tweet.get_terms():
