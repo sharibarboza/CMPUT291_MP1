@@ -73,6 +73,13 @@ def search_tweets(session, user):
     s_tweets.get_search_tweets()
     return s_tweets 
 
+def is_hashtag(term):
+    """Return True if term is a hashtag
+
+    :param term: a keyword string
+    """
+    return term[0] == '#'
+
 
 class Tweet:
 
@@ -93,6 +100,11 @@ class Tweet:
         self.text = data[3]
         self.replyto = data[4]
 
+        if len(data) > 5:
+            self.rt_user = data[5]
+        else:
+            self.rt_user = None
+
         if self.replyto:
             self.reply_user = get_user_from_tid(self.curs, self.replyto)
             self.reply_name = get_name(self.curs, self.reply_user)
@@ -111,6 +123,14 @@ class Tweet:
     def tid(self):
         """Return the tweet id"""
         return self.id
+
+    def author(self):
+        """Return the tweet writer"""
+        return self.writer
+
+    def retweeter(self):
+        """Return the id of retweeter"""
+        return self.rt_user
 
     def display(self, user=None):
         """ Displays basic info on a tweet
@@ -244,47 +264,59 @@ class TweetSearch:
     def get_search_tweets(self):
         """Find tweets matching keywords"""
         match_tweet(self.tweetCurs, self.keywords, 'tdate')
-        self.get_all_tweets()
+        self.add_filtered_tweets()
+        self.more_tweets()
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed"""
         follows_tweets(self.tweetCurs, self.user)
-        self.get_all_tweets() 
-
-    def get_all_tweets(self):
-        """Fetches all tweet query results"""
-        self.all_tweets = self.tweetCurs.fetchall()
-        self.more_tweets()
         self.add_tweets()
+        self.more_tweets()
 
     def add_tweets(self):
         """Adds tweets from the 5 currently displayed tweets to a list"""
-        self.tweets = []
-        for row in self.rows:
+        for row in self.tweetCurs.fetchall():
             tweet = Tweet(self.conn, self.user, data=row)
-            self.tweets.append(tweet)
+            self.all_tweets.append(tweet)
+
+    def add_filtered_tweets(self):
+        for row in self.tweetCurs.fetchall():
+            tweet = Tweet(self.conn, self.user, data=row)
+
+            valid_tweet = True
+            if len(self.keywords) > 0:
+                valid_tweet = self.validate_tweet(tweet)
+
+            if valid_tweet:
+                self.all_tweets.append(tweet)
+
+    def validate_tweet(self, tweet):
+        tweet.set_terms()
+        for word in self.keywords:
+            if not is_hashtag(word) and word in tweet.get_terms():
+                return False
+        return True
 
     def more_tweets(self):
         """Gets the next 5 tweets from users who are being followed"""
         assert(self.tweetCurs is not None), 'Unable to select more tweets'
 
-        self.rows = self.all_tweets[self.tweet_index - 5:self.tweet_index]
+        self.tweets = self.all_tweets[self.tweet_index - 5:self.tweet_index]
         self.more_exist = len(self.all_tweets) - self.tweet_index > 0
         self.tweet_index += 5
-        self.add_tweets()
   
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
-        for i, row in enumerate(self.rows):
+        for i, tweet in enumerate(self.tweets):
             print("Tweet %d" % (i + 1))
-            tweet = self.tweets[i]
    
-            if len(row) > 5 and tweet.writer != row[5]: 
-                tweet.display(row[5])
+            rt_user = tweet.retweeter()
+            if rt_user and tweet.author() != rt_user: 
+                tweet.display(rt_user)
             else:
                 tweet.display() 
 
-        if len(self.rows) == 0:
+        if len(self.tweets) == 0:
             print("You have no tweets yet.")
 
     def tweet_menu(self):
@@ -322,7 +354,7 @@ class TweetSearch:
     def choose_tweet(self):
         """Returns the number of the tweet the user wants to select"""
         choices = []
-        for i, row in enumerate(self.rows, 1):
+        for i in range(1, len(self.tweets) + 1):
             tweet_str = "Tweet %d" % (i)
             choices.append(tweet_str)
 
@@ -341,10 +373,8 @@ class TweetSearch:
 
     def tweets_exist(self):
         """Return true if user has tweets to display"""
-        return True if len(self.rows) > 0 else False
+        return True if len(self.tweets) > 0 else False
 
     def more_tweets_exist(self):
         """Return true if more tweets can be displayed"""
         return self.more_exist
-
-

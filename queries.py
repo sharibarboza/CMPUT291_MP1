@@ -172,8 +172,8 @@ def list_exists(curs, lname, owner):
     :param owner: user id of list owner
     """
     curs.execute("select * from lists where lname like '%%' || :1 || '%%' " 
- 	"and owner=:2", [lname, owner])
-    return curs.fetchone() is not None 
+    "and owner=:2", [lname, owner])
+    return curs.fetchone() is not None  
 
 def select(curs, table):
     """ Select rows from a table 
@@ -282,12 +282,21 @@ def match_tweet(curs, keywords, order):
     if len(keywords) == 0:
         return
 
-    q = "select * from tweets where lower(text) like '%%' || :1 || '%%'"
+    q = "select * from tweets t left outer join mentions m on t.tid=m.tid where"
+    term_q = " m.term like '%%' || :%d || '%%'"
+    text_q = " lower(t.text) like '%%' || :%d || '%%' and (m.term is null or m.term not like '%%' || :%d || '%%')"
 
-    for i in range(2, len(keywords) + 1): 
-       q += " or lower(text) like '%%' || :%d || '%%'" % (i) 
-    q += " order by %s desc" % (order)   
-    
+    if keywords[0][0] == '#':
+        q += term_q % (1)
+    else:
+        q += text_q % (1, 1)
+
+    for i in range(2, len(keywords) + 1):
+        if keywords[i][0] == '#':
+            q += term_q % (i)
+        else:
+            q += text_q & (i, i)
+     
     curs.execute(q, keywords)
 
 def match_name(curs, keyword):
