@@ -10,7 +10,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
-    new_tweet = create_tweet(conn, user, replyto, menu_func)
+    new_tweet = create_tweet(conn, user, menu_func, replyto)
  
     confirm = validate_yn("Confirm tweet? y/n: ")
     if confirm in ["n", "no"]:
@@ -23,7 +23,7 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
     print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
     press_enter()
 
-def create_tweet(conn, user, replyto, menu_func):
+def create_tweet(conn, user, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
 
     :param user: logged in user id
@@ -73,13 +73,6 @@ def search_tweets(session, user):
     s_tweets.get_search_tweets()
     return s_tweets 
 
-def is_hashtag(term):
-    """Return True if term is a hashtag
-
-    :param term: a keyword string
-    """
-    return term[0] == '#'
-
 
 class Tweet:
 
@@ -100,7 +93,7 @@ class Tweet:
         self.text = data[3]
         self.replyto = data[4]
 
-        if len(data) > 5:
+        if len(data) > 5: 
             self.rt_user = data[5]
         else:
             self.rt_user = None
@@ -116,14 +109,6 @@ class Tweet:
         self.writer_name = get_name(self.curs, self.writer)
         self.terms = []
 
-    def tdate(self):
-        """Return the tweet date"""
-        return self.date_str
-
-    def tid(self):
-        """Return the tweet id"""
-        return self.id
-
     def author(self):
         """Return the tweet writer"""
         return self.writer
@@ -131,6 +116,14 @@ class Tweet:
     def retweeter(self):
         """Return the id of retweeter"""
         return self.rt_user
+
+    def tdate(self):
+        """Return the tweet date"""
+        return self.date_str
+
+    def tid(self):
+        """Return the tweet id"""
+        return self.id
 
     def display(self, user=None):
         """ Displays basic info on a tweet
@@ -285,7 +278,6 @@ class TweetSearch:
         """
         for row in self.tweetCurs.fetchall():
             tweet = Tweet(self.conn, self.user, data=row)
-
             valid_tweet = True
             if len(self.keywords) > 0:
                 valid_tweet = self.validate_tweet(tweet)

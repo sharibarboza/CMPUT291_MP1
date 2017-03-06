@@ -23,6 +23,25 @@ def convert_keywords(keywords, lower=True):
     else:
         return [word for word in keywords] 
 
+def is_hashtag(term):
+    """Return True if term is a hashtag
+
+    :param term: a keyword string
+    """
+    return term[0] == '#'
+
+def remove_hashtags(keywords):
+    """Returns a list with hashtags removed from keywords
+
+    :param keywords: list of tokenized strings
+    """
+    new_list = []
+    for word in keywords:
+        if is_hashtag(word):
+            word = word.replace('#','')
+        new_list.append(word)
+    return new_list
+
 def display_selections(selections):
     """Helper method for easily displaying numbered lists   
  

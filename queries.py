@@ -1,3 +1,5 @@
+from utils import is_hashtag, remove_hashtags
+
 # Query helper methods
 
 # ---------------------------- INSERT QUERIES ----------------------------------
@@ -282,23 +284,26 @@ def match_tweet(curs, keywords, order):
     if len(keywords) == 0:
         return
 
-    q = "select * from tweets t left outer join mentions m on t.tid=m.tid where"
+    q = "select t.tid, t.writer, t.tdate, t.text, t.replyto from tweets t " \
+        "left outer join mentions m on t.tid=m.tid where"
     term_q = " m.term like '%%' || :%d || '%%'"
-    text_q = " lower(t.text) like '%%' || :%d || '%%' and (m.term is null or m.term not like '%%' || :%d || '%%')"
+    text_q = " lower(t.text) like '%%' || :%d || '%%' and" \
+             " (m.term is null or m.term not like '%%' || :%d || '%%')"
 
-    if keywords[0][0] == '#':
+    if is_hashtag(keywords[0]):
         q += term_q % (1)
     else:
         q += text_q % (1, 1)
 
     for i in range(2, len(keywords) + 1):
-        if keywords[i][0] == '#':
+        if is_hashtag(keywords[i]):
             q += term_q % (i)
         else:
             q += text_q & (i, i)
     q += " order by %s desc" % (order)
-     
-    curs.execute(q, keywords)
+
+    terms = remove_hashtags(keywords)
+    curs.execute(q, terms)
 
 def match_name(curs, keyword):
     """Matches users whose names contain the keyword
