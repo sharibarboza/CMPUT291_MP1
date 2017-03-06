@@ -38,19 +38,7 @@ def create_tweet(conn, user, replyto, menu_func):
     data = [tid, writer, date, text, replyto, rt_user]
     new_tweet = Tweet(conn, user, data)
     new_tweet.display()
-
-    confirm = validate_yn("Confirm tweet? y/n: ")
-    if confirm in ["n", "no"]:
-        print("Tweet cancelled.")
-        return
-    else:
-        insert_tweet(conn, new_tweet.get_values())
-        print("Tweet %d created." % (new_tweet.id))
-        press_enter()
-
-    new_tweet = Tweet(conn, user, data)
     new_tweet.set_terms()
-    new_tweet.display()
 
     if not new_tweet.valid_terms():
         return create_tweet(conn, user, replyto, menu_func)
