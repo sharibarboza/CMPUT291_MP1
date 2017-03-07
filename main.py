@@ -106,10 +106,17 @@ class Session:
         timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self, self.start_up, 4)
 
-        print("Welcome %s! Your new user id is %d." % (name, self.username))
+        print(BORDER)
+        print("Name: %s, Email: %s, City: %s, Timezone: %d" % (name, email, city, timezone))
+        confirm = validate_yn("Confirm user? y/n: ", self)
 
-        data = [self.username, password, name, email, city, timezone]
-        insert_user(self.conn, data)
+        if confirm in ["y", "yes"]:
+            print("Welcome %s! Your new user id is %d." % (name, self.username))
+            data = [self.username, password, name, email, city, timezone]
+            insert_user(self.conn, data)
+            press_enter()
+        else:
+            self.start_up()
 
     def generate_user(self):
         """Generates a new unique user id for user sign-up"""

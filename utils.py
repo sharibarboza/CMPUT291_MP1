@@ -20,7 +20,7 @@ def convert_date(date_obj):
     
     :param data_obj: datetime.datetime object
     """
-    return datetime.strftime(date_obj, "%b %d %Y")
+    return datetime.strftime(date_obj, "%b %-d %Y")
 
 def convert_keywords(keywords, lower=True):
     """Takes in string input from user, replaces commas, and converts to list

@@ -162,7 +162,7 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute("select term from mention where tid=:1 and term like '%%' || :2 || '%%'",
+    curs.execute("select term from mentions where tid=:1 and term like '%%' || :2 || '%%'",
         [tid, term])
     return curs.fetchone() is not None
 

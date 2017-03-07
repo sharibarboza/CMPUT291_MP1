@@ -138,46 +138,42 @@ class Tweet:
         
         :param user (optional): user id of the user who retweeted this tweet
         """
-        col1_width = 20
+        col1_width = 25
         col2_width = BORDER_LEN - col1_width - 1
 
         if index is not None: 
             tweet_index = "Tweet %d" % (index + 1)
         else:
-            tweet_index = ""
+            tweet_index = "Tweet %d" % (self.id) 
 
-        date_line = "%s [id=%d]" % (self.date_str, self.id)
-        user_id = "@%d" % (self.writer)
+        date_line = "| %s" % (self.date_str)
+        user_id = "%d (%s)" % (self.writer, self.writer_name)
+        
 
-        if self.replyto:
-            text_str = "@%s %s" % (self.reply_name, self.text)
+        if self.replyto is not None:
+            rep_str = "@%d (%s)" % (self.replyto, self.reply_name)
+            text_str = "| @%s %s" % (self.replyto, self.text) 
         else:
-            text_str = self.text
+            rep_str = " "
+            text_str = "| " + self.text
 
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
-        line2_1 = "{:{width}}".format(self.writer_name, width=col1_width)
-        line3_1 = "{:{width}}".format(user_id, width=col1_width)
+        line2_1 = "{:{width}}".format(user_id, width=col1_width)
+        line3_1 = "{:{width}}".format(rep_str, width=col1_width)
         line1_2 = "{:{width}}".format(text_str, width=col2_width)
         line2_2 = "{:{width}}".format(date_line, width=col2_width)
-        line3_2 = " "
+        line3_2 = "| "
 
         if rt_user is not None:
             user_name = get_name(self.curs, rt_user)
-            retweeted = "%s Retweeted" % user_name
+            retweeted = "| %s Retweeted" % user_name
             line3_2 = line2_2
             line2_2 = line1_2
             line1_2 = "{:{width}}".format(retweeted, width=col2_width)
 
-        if index is None:
-            line1_1 = line2_1
-            line2_1 = line3_1
-            line3_1 = " "
-
         print_string(line1_1 + line1_2)
         print_string(line2_1 + line2_2)
-
-        if index is not None:
-            print_string(line3_1 + line3_2)
+        print_string(line3_1 + line3_2)
         print(BORDER)
 
     def display_stats(self):
