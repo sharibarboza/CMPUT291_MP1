@@ -196,7 +196,6 @@ class Tweet:
 
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
-        print(BORDER)
 
     def reply(self, menu_func):
         """Reply to the Tweet
@@ -208,17 +207,23 @@ class Tweet:
     def retweet(self):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
+            print(BORDER)
             print_string("You already retweeted this tweet.")
+            print(BORDER)
             return
             
-        self.display(self.user)
+        print(BORDER)
+        self.display(rt_user=self.user)
         confirm = validate_yn("Confirm retweet? y/n: ")
         if confirm in ["n", "no"]:
             print_string("Retweet cancelled.")
         else:
+            print(BORDER)
             print_string("Retweeted - %s" % (convert_date(TODAY)))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
+            print(BORDER)
+
             press_enter()
 
     def get_values(self):
@@ -369,6 +374,7 @@ class TweetSearch:
         Returns the selected option from the tweet menu
         """
         choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
+        print(BORDER2)
         display_selections(choices)
 
         return choices

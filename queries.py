@@ -295,11 +295,12 @@ def match_tweet(curs, keywords, order):
     else:
         q += text_q % (1, 1)
 
-    for i in range(2, len(keywords) + 1):
+    for i in range(1, len(keywords)):
+        index = i
         if is_hashtag(keywords[i]):
-            q += term_q % (i)
+            q += " or" + term_q % (i)
         else:
-            q += text_q & (i, i)
+            q += " or" + text_q % (i, i)
     q += " order by %s desc" % (order)
 
     terms = remove_hashtags(keywords)

@@ -104,7 +104,7 @@ class Session:
         timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self.start_up, 4)
 
-        print_string("Welcome %s! Your new user id is %d.\n" % (name, self.username), no_border=True)
+        print_string("Welcome %s! Your new user id is %d." % (name, self.username), no_border=True)
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
@@ -140,7 +140,7 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if t.tweets_exist:
+        if self.tweets.tweets_exist():
             choices.insert(0, "Select a tweet")
     
             if t.more_tweets_exist():
