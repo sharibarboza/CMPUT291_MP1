@@ -1,8 +1,20 @@
 from datetime import datetime
 
-from constants import BORDER
+from constants import BORDER_LEN, BORDER, BORDER2
 
 # Util methods
+def format_string(string, no_border=False):
+    """Format string for input"""
+    if no_border:
+        return "  " + string
+    else:
+        str1 = "| " + string
+        return str1 + " " * (BORDER_LEN - len(str1) + 1) + "|"  
+
+def print_string(string, no_border=False):
+    """Prints a string with border lines"""
+    print(format_string(string, no_border))
+
 def convert_date(date_obj):
     """Convert a datetime.datetime object from a query into a string
     
@@ -10,7 +22,7 @@ def convert_date(date_obj):
     """
     return datetime.strftime(date_obj, "%b %d %Y")
 
-def convert_keywords(keywords):
+def convert_keywords(keywords, lower=True):
     """Takes in string input from user, replaces commas, and converts to list
 
     :param keywords: list of tokenized strings
@@ -18,16 +30,42 @@ def convert_keywords(keywords):
     keywords = keywords.replace(',','')
     keywords = keywords.split()
 
-    return [word.lower() for word in keywords] 
+    if lower:
+        return [word.lower() for word in keywords]
+    else:
+        return [word for word in keywords] 
 
-def display_selections(selections):
+def is_hashtag(term):
+    """Return True if term is a hashtag
+
+    :param term: a keyword string
+    """
+    return term[0] == '#'
+
+def remove_hashtags(keywords):
+    """Returns a list with hashtags removed from keywords
+
+    :param keywords: list of tokenized strings
+    """
+    new_list = []
+    for word in keywords:
+        if is_hashtag(word):
+            word = word.replace('#','')
+        new_list.append(word)
+    return new_list
+
+def display_selections(selections, title_menu=None):
     """Helper method for easily displaying numbered lists   
  
     param selections: A list containing each menu item
     """
-    print(BORDER)
+    if title_menu:
+        print(BORDER2)
+        print_string(title_menu.upper())
+        print(BORDER2)
+
     for i, choice in enumerate(selections, 1):
-    	print("%d. %s" % (i, choice))
+    	print_string("%d. %s" % (i, choice))
     print(BORDER)
 
 def check_quit(user_input):
@@ -97,6 +135,7 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     while not valid:
         try:
             choice = input(prompt)
+
             if check_quit(choice):
                 exit_input(choice, menu_func) 
             if num_type == 'int':
@@ -128,11 +167,11 @@ def validate_yn(prompt):
     choice = None
     
     while not valid:
-        choice = input(prompt).lower()
-        if choice not in ['y', 'n', 'yes', 'no']:
+        choice = input(prompt)
+        if choice.lower() not in ['y', 'n', 'yes', 'no']:
             print("Enter either y/yes or n/no.")
             valid = False
         else:
             valid = True
 
-    return choice
+    return choice.lower()

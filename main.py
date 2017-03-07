@@ -2,7 +2,7 @@ import sys
 
 from connect import get_connection
 from constants import BORDER, SELECT
-from utils import display_selections, validate_str, validate_num
+from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
 
@@ -53,7 +53,7 @@ class Session:
         registered and unregistered users 
         """
         choices = ["Login", "Sign up", "Exit"]
-        display_selections(choices)
+        display_selections(choices, "Welcome to Twitter")
         choice = validate_num(SELECT, self.exit, size=len(choices))
 
         if choice == 1:
@@ -80,7 +80,7 @@ class Session:
         row = find_user(self.curs, self.username, password)
 
         if row is None:
-            print("Username and/or password not valid.\n")
+            print_string("Username and/or password not valid.\n")
             self.username = None	
         else:
             name = row[2].rstrip()
@@ -92,7 +92,7 @@ class Session:
 
     def logout(self):
         """Logs user out of the system. Returns user to start up screen"""
-        print("Logged out.")
+        print_string("Logged out.")
         self.start_up()
 
     def signup(self):
@@ -104,7 +104,7 @@ class Session:
         timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self.start_up, 4)
 
-        print("Welcome %s! Your new user id is %d.\n" % (name, self.username))
+        print("Welcome %s! Your new user id is %d." % (name, self.username))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
@@ -140,20 +140,18 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if t.tweets_exist:
+        if t.tweets_exist():
             choices.insert(0, "Select a tweet")
     
             if t.more_tweets_exist():
                 choices.insert(1, "See more tweets")
     
-        display_selections(choices)
+        display_selections(choices, "Main Menu")
         return choices
 
     def home(self):
         """Displays main system functionalities menu"""
-        while True:
-            print(BORDER)
-            
+        while True:          
             t = self.s_tweets if self.s_tweets else self.tweets
             t.display_tweets()
             choices = self._main_menu(t)
@@ -192,7 +190,7 @@ class Session:
             elif option == 'Search tweets':
                 self.s_tweets = search_tweets(self, self.username) 
             elif option == 'Compose tweet':
-                compose_tweet(self.conn, self.username, self.home)
+                compose_tweet(self.conn, self.username, menu_func=self.home)
             elif option == 'Logout':
                 self.logout()
    

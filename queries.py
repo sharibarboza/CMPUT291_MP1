@@ -1,3 +1,5 @@
+from utils import is_hashtag, remove_hashtags
+
 # Query helper methods
 
 # ---------------------------- INSERT QUERIES ----------------------------------
@@ -172,8 +174,8 @@ def list_exists(curs, lname, owner):
     :param owner: user id of list owner
     """
     curs.execute("select * from lists where lname like '%%' || :1 || '%%' " 
- 	"and owner=:2", [lname, owner])
-    return curs.fetchone() is not None 
+        "and owner=:2", [lname, owner])
+    return curs.fetchone() is not None
 
 def select(curs, table):
     """ Select rows from a table 
@@ -282,13 +284,27 @@ def match_tweet(curs, keywords, order):
     if len(keywords) == 0:
         return
 
-    q = "select * from tweets where lower(text) like '%%' || :1 || '%%'"
+    q = "select distinct t.tid, t.writer, t.tdate, t.text, t.replyto from tweets t " \
+        "left outer join mentions m on t.tid=m.tid where"
+    term_q = " m.term like '%%' || :%d || '%%'"
+    text_q = " lower(t.text) like '%%' || :%d || '%%' and" \
+             " (m.term is null or m.term not like '%%' || :%d || '%%')"
 
-    for i in range(2, len(keywords) + 1): 
-       q += " or lower(text) like '%%' || :%d || '%%'" % (i) 
-    q += " order by %s desc" % (order)   
-    
-    curs.execute(q, keywords)
+    if is_hashtag(keywords[0]):
+        q += term_q % (1)
+    else:
+        q += text_q % (1, 1)
+
+    for i in range(1, len(keywords)):
+        index = i
+        if is_hashtag(keywords[i]):
+            q += " or" + term_q % (i)
+        else:
+            q += " or" + text_q % (i, i)
+    q += " order by %s desc" % (order)
+
+    terms = remove_hashtags(keywords)
+    curs.execute(q, terms)
 
 def match_name(curs, keyword):
     """Matches users whose names contain the keyword
