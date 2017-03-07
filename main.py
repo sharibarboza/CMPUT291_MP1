@@ -54,7 +54,7 @@ class Session:
         """
         choices = ["Login", "Sign up", "Exit"]
         display_selections(choices, "Welcome to Twitter")
-        choice = validate_num(SELECT, self.exit, size=len(choices))
+        choice = validate_num(SELECT, self, self.exit, size=len(choices))
 
         if choice == 1:
     	    self.login()
@@ -67,6 +67,8 @@ class Session:
 
     def exit(self):
         """Exit from the system and close database"""
+        print("\nThank you for using Twitter. Existing database ...")
+
         self.curs.close()
         self.conn.close()
         sys.exit()
@@ -75,8 +77,8 @@ class Session:
         """Allows returning user to sign in. Will return to the start
         up screen if login fails
         """
-        self.username = validate_num("Enter username: ", self.start_up)
-        password = validate_str("Enter password: ", self.start_up, 4)
+        self.username = validate_num("Enter username: ", self, menu_func=self.start_up)
+        password = validate_str("Enter password: ", self, self.start_up, 4)
         row = find_user(self.curs, self.username, password)
 
         if row is None:
@@ -98,11 +100,11 @@ class Session:
     def signup(self):
         """Creates a new user and inserts user into the database"""
         self.username = self.generate_user()
-        name = validate_str("Enter your name: ", self.start_up, 20)
-        email = validate_str("Enter your email: ", self.start_up, 15)
-        city = validate_str("Enter your city: ", self.start_up, 12)
-        timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
-        password = validate_str("Enter your password: ", self.start_up, 4)
+        name = validate_str("Enter your name: ", self, self.start_up, 20)
+        email = validate_str("Enter your email: ", self, self.start_up, 15)
+        city = validate_str("Enter your city: ", self, self.start_up, 12)
+        timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
+        password = validate_str("Enter your password: ", self, self.start_up, 4)
 
         print("Welcome %s! Your new user id is %d." % (name, self.username))
 
@@ -155,7 +157,7 @@ class Session:
             t = self.s_tweets if self.s_tweets else self.tweets
             t.display_tweets()
             choices = self._main_menu(t)
-            choice = validate_num(SELECT, self.start_up, size=len(choices)) - 1
+            choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
 
             if self.s_tweets and option not in ['Select a tweet', 'See more tweets']:
@@ -190,7 +192,7 @@ class Session:
             elif option == 'Search tweets':
                 self.s_tweets = search_tweets(self, self.username) 
             elif option == 'Compose tweet':
-                compose_tweet(self.conn, self.username, menu_func=self.home)
+                compose_tweet(self, self.username, menu_func=self.home)
             elif option == 'Logout':
                 self.logout()
    
