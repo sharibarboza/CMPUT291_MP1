@@ -66,7 +66,7 @@ def display_selections(selections, title_menu=None):
 
     for i, choice in enumerate(selections, 1):
     	print_string("%d. %s" % (i, choice))
-    print(BORDER2)
+    print(BORDER)
 
 def check_quit(user_input):
     """Checks if a user entered a quit message
@@ -106,7 +106,6 @@ def validate_str(prompt, menu_func=None, length=None):
     usr_input = None
 
     while not valid:
-        prompt = format_string(prompt, no_border=True)
         usr_input = input(prompt)
         if check_quit(usr_input):
             exit_input(usr_input, menu_func) 
@@ -135,7 +134,6 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
 
     while not valid:
         try:
-            prompt = format_string(prompt, no_border=True)
             choice = input(prompt)
 
             if check_quit(choice):
@@ -169,7 +167,6 @@ def validate_yn(prompt):
     choice = None
     
     while not valid:
-        prompt = format_string(prompt, no_border=True)
         choice = input(prompt)
         if choice.lower() not in ['y', 'n', 'yes', 'no']:
             print("Enter either y/yes or n/no.")

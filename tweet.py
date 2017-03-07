@@ -367,6 +367,7 @@ class TweetSearch:
 
         if len(self.tweets) == 0:
             print_string("You have no tweets yet.")
+            print(BORDER + '\n')
 
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 

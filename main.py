@@ -85,7 +85,7 @@ class Session:
         else:
             name = row[2].rstrip()
             first_name = name.split()[0]
-            print_string("Welcome back, %s.\n" % (first_name), no_border=True)
+            print("Welcome back, %s." % (first_name))
 
         if self.username is None:
             self.start_up()
@@ -104,7 +104,7 @@ class Session:
         timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self.start_up, 4)
 
-        print_string("Welcome %s! Your new user id is %d." % (name, self.username), no_border=True)
+        print("Welcome %s! Your new user id is %d." % (name, self.username))
 
         data = [self.username, password, name, email, city, timezone]
         insert_user(self.conn, data)
@@ -140,7 +140,7 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if self.tweets.tweets_exist():
+        if t.tweets_exist():
             choices.insert(0, "Select a tweet")
     
             if t.more_tweets_exist():
