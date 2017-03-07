@@ -162,7 +162,7 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute("select term from mentions where tid=:1 and term like '%%' || :2 || '%%'",
+    curs.execute("select term from mention where tid=:1 and term like '%%' || :2 || '%%'",
         [tid, term])
     return curs.fetchone() is not None
 
@@ -174,8 +174,8 @@ def list_exists(curs, lname, owner):
     :param owner: user id of list owner
     """
     curs.execute("select * from lists where lname like '%%' || :1 || '%%' " 
-    "and owner=:2", [lname, owner])
-    return curs.fetchone() is not None  
+        "and owner=:2", [lname, owner])
+    return curs.fetchone() is not None
 
 def select(curs, table):
     """ Select rows from a table 
