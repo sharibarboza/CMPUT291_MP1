@@ -49,7 +49,7 @@ def create_tweet(session, user, menu_func, replyto):
     new_tweet.set_terms()
 
     if not new_tweet.valid_terms():
-        return create_tweet(session, user, replyto, menu_func)
+        return create_tweet(session, user, menu_func, replyto)
     
     return new_tweet
 
