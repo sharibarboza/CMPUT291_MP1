@@ -6,7 +6,7 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
 
-    :param conn: session connection
+    :param session: Session object 
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
@@ -30,7 +30,9 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
 def create_tweet(session, user, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
 
+    :param session: Session object
     :param user: logged in user id
+    :param menu_func: function to return to if user quits
     :param replyto: id of user to replyto or None
     """
     text = validate_str("Enter tweet: ", session, menu_func=menu_func)
@@ -53,7 +55,7 @@ def create_tweet(session, user, menu_func, replyto):
 
    
 def generate_tid(conn):
-    """ Generates a new unique tweet id
+    """Generates a new unique tweet id
     
     :param conn: session connection
     """
@@ -135,7 +137,8 @@ class Tweet:
     def display(self, index=None, rt_user=None):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
-        
+      
+        :param index (optional): tweet number (1-5)  
         :param user (optional): user id of the user who retweeted this tweet
         """
         col1_width = 25
@@ -160,8 +163,8 @@ class Tweet:
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
         line2_1 = "{:{width}}".format(user_id, width=col1_width)
         line3_1 = "{:{width}}".format(rep_str, width=col1_width)
-        line1_2 = "{:{width}}".format(text_str, width=col2_width)
-        line2_2 = "{:{width}}".format(date_line, width=col2_width)
+        line1_2 = "{:{width}}".format(date_line, width=col2_width)
+        line2_2 = "{:{width}}".format(text_str, width=col2_width)
         line3_2 = "| "
 
         if rt_user is not None:
@@ -297,7 +300,12 @@ class TweetSearch:
         self.more_exist = False
         self.tweet_index = 5
         self.rows = None
-        self.keywords = convert_keywords(keywords) 
+        self.searched = keywords
+        self.keywords = convert_keywords(keywords)
+
+    def get_searched(self):
+        """Returns the user's search input"""
+        return self.searched
 
     def get_search_tweets(self):
         """Find tweets matching keywords"""
@@ -351,10 +359,6 @@ class TweetSearch:
   
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
-        print('\n' + BORDER2)
-        print_string("Home".upper())
-        print(BORDER2)
-
         for i, tweet in enumerate(self.tweets):
             rt_user = tweet.retweeter()
             if rt_user and tweet.author() != rt_user: 

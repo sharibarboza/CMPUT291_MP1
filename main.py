@@ -19,6 +19,8 @@ class Session:
         self.conn = self.connect() 
         self.curs = self.conn.cursor()
         self.username = None
+        self.logged_user = None
+        self.name = None
         self.tweets = None
         self.s_tweets = None      
 
@@ -48,13 +50,26 @@ class Session:
         """Return the logged in user id"""
         return self.username
 
+    def get_name(self):
+        """Return the user's first and last name"""
+        return self.name
+
     def start_up(self):
         """Displays start up screen to provide options for both
         registered and unregistered users 
         """
-        choices = ["Login", "Sign up", "Exit"]
-        display_selections(choices, "Welcome to Twitter")
-        choice = validate_num(SELECT, self, self.exit, size=len(choices))
+        print(BORDER2)
+        print_string("WELCOME TO TWITTER - A COMMAND LINE CLIENT")
+        print_string("Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza")
+        print(BORDER2)
+        choices = ["Login", "Sign-Up", "Exit"]
+        display_selections(choices)
+        print_string("INPUT INSTRUCTIONS:") 
+        print_string("Enter a number specified by the menu to select an option.") 
+        print_string("Enter control-C any time to immediately exit the program.")
+        print_string("Enter q, quit, or exit to cancel input and return to the previous screen.")
+        print(BORDER)
+        choice = validate_num(SELECT, self, self.exit, size=3)
 
         if choice == 1:
     	    self.login()
@@ -83,18 +98,16 @@ class Session:
 
         if row is None:
             print_string("Username and/or password not valid.\n")
-            self.username = None	
+            self.username = None
         else:
-            name = row[2].rstrip()
-            first_name = name.split()[0]
-            print("Welcome back, %s." % (first_name))
+            self.name = row[2].rstrip()
+            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)	
 
         if self.username is None:
             self.start_up()
 
     def logout(self):
         """Logs user out of the system. Returns user to start up screen"""
-        print_string("Logged out.")
         self.start_up()
 
     def signup(self):
@@ -162,6 +175,16 @@ class Session:
         """Displays main system functionalities menu"""
         while True:          
             t = self.s_tweets if self.s_tweets else self.tweets
+            
+            if self.s_tweets:
+                title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
+            else: 
+                title = "HOME"
+            
+            print('\n' + BORDER2)
+            split_title(title, self.logged_user)
+            print(BORDER2)
+
             t.display_tweets()
             choices = self._main_menu(t)
             choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1

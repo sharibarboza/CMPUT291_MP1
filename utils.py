@@ -15,6 +15,11 @@ def print_string(string, no_border=False):
     """Prints a string with border lines"""
     print(format_string(string, no_border))
 
+def split_title(title, string):
+    """Prints a title and another string justified to the right"""
+    space_length = BORDER_LEN - len(string) - len(title) - 2
+    print_string(title + ' ' * (space_length) + string) 
+
 def convert_date(date_obj):
     """Convert a datetime.datetime object from a query into a string
     
@@ -57,10 +62,11 @@ def remove_hashtags(keywords):
 def display_selections(selections, title_menu=None):
     """Helper method for easily displaying numbered lists   
  
-    param selections: A list containing each menu item
+    :param selections: A list containing each menu item
+    :param title_menu (optional): string title
     """
     if title_menu:
-        print(BORDER2)
+        print('\n' + BORDER2)
         print_string(title_menu.upper())
         print(BORDER2)
 
