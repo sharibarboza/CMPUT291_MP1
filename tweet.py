@@ -154,8 +154,8 @@ class Tweet:
         
 
         if self.replyto is not None:
-            rep_str = "@%d (%s)" % (self.replyto, self.reply_name)
-            text_str = "| @%s %s" % (self.replyto, self.text) 
+            rep_str = "@%d (%s)" % (self.reply_user, self.reply_name)
+            text_str = "| @%s %s" % (self.reply_user, self.text) 
         else:
             rep_str = " "
             text_str = "| " + self.text
