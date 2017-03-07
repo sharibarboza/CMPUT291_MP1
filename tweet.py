@@ -1,4 +1,4 @@
-from constants import SELECT, TODAY
+from constants import SELECT, TODAY, BORDER, BORDER_LEN
 from utils import *
 from queries import * 
 
@@ -19,8 +19,12 @@ def compose_tweet(conn, user, menu_func=None, replyto=None):
              
     insert_tweet(conn, new_tweet.get_values())
     new_tweet.insert_terms()
-    print("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
-    print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
+
+    print(BORDER)
+    print_string("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
+    print_string("Hashtags mentioned: %s" % (new_tweet.get_terms()))
+    print(BORDER)
+
     press_enter()
 
 def create_tweet(conn, user, menu_func, replyto):
@@ -30,6 +34,8 @@ def create_tweet(conn, user, menu_func, replyto):
     :param replyto: id of user to replyto or None
     """
     text = validate_str("Enter tweet: ", menu_func=menu_func)
+    print('\n' + BORDER)
+
     writer = user
     tid = generate_tid(conn)
     date = TODAY
@@ -90,7 +96,7 @@ class Tweet:
         self.id = data[0]
         self.writer = data[1]
         self.date = data[2]
-        self.text = data[3]
+        self.text = data[3].rstrip()
         self.replyto = data[4]
 
         if len(data) > 5: 
@@ -125,35 +131,72 @@ class Tweet:
         """Return the tweet id"""
         return self.id
 
-    def display(self, user=None):
+    def display(self, index=None, rt_user=None):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
         
         :param user (optional): user id of the user who retweeted this tweet
         """
-        if user:
-            user_name = get_name(self.curs, user)
-            print("%s Retweeted" % (user_name))
+        col1_width = 20
+        col2_width = BORDER_LEN - col1_width - 1
 
-        print("%s @%d - %s" % (self.writer_name, self.writer, self.date_str))
-        print("%s\n" % (self.text))
+        if index is not None: 
+            tweet_index = "Tweet %d" % (index + 1)
+        else:
+            tweet_index = ""
+
+        date_line = "%s [id=%d]" % (self.date_str, self.id)
+        user_id = "@%d" % (self.writer)
+
+        if self.replyto:
+            text_str = "@%s %s" % (self.reply_name, self.text)
+        else:
+            text_str = self.text
+
+        line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
+        line2_1 = "{:{width}}".format(self.writer_name, width=col1_width)
+        line3_1 = "{:{width}}".format(user_id, width=col1_width)
+        line1_2 = "{:{width}}".format(text_str, width=col2_width)
+        line2_2 = "{:{width}}".format(date_line, width=col2_width)
+        line3_2 = " "
+
+        if rt_user is not None:
+            user_name = get_name(self.curs, rt_user)
+            retweeted = "%s Retweeted" % user_name
+            line3_2 = line2_2
+            line2_2 = line1_2
+            line1_2 = "{:{width}}".format(retweeted, width=col2_width)
+
+        if index is None:
+            line1_1 = line2_1
+            line2_1 = line3_1
+            line3_1 = " "
+
+        print_string(line1_1 + line1_2)
+        print_string(line2_1 + line2_2)
+
+        if index is not None:
+            print_string(line3_1 + line3_2)
+        print(BORDER)
 
     def display_stats(self):
         """ Displays statistics on a tweet after a tweet has been selected"""
-        print("\nTWEET STATISTICS\n")
-
-        print("Tweet ID: %d" % (self.id))
-        print("Written by: %s @%d" % (self.writer_name, self.writer))
-        print("Posted: %s" % (self.date_str))
-        print("Text: %s" % (self.text))
+        print('\n' + BORDER2)
+        print_string("Tweet Statistics".upper())
+        print(BORDER2)
+        print_string("Tweet ID: %d" % (self.id))
+        print_string("Written by: %s @%d" % (self.writer_name, self.writer))
+        print_string("Posted: %s" % (self.date_str))
+        print_string("Text: %s" % (self.text))
 
         if (self.replyto):
-            print("Reply to: %s (%s @%d)" % (self.reply_text, self.reply_name, self.reply_user))
+            print_string("Reply to: %s (%s @%d)" % (self.reply_text, self.reply_name, self.reply_user))
         else:
-            print("Reply to: None")
+            print_string("Reply to: None")
 
-        print("Number of replies: %s" % (self.rep_cnt))
-        print("Number of retweets: %s" % (self.ret_cnt))
+        print_string("Number of replies: %s" % (self.rep_cnt))
+        print_string("Number of retweets: %s" % (self.ret_cnt))
+        print(BORDER)
 
     def reply(self, menu_func):
         """Reply to the Tweet
@@ -165,15 +208,15 @@ class Tweet:
     def retweet(self):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
-            print("You already retweeted this tweet.")
+            print_string("You already retweeted this tweet.")
             return
             
         self.display(self.user)
         confirm = validate_yn("Confirm retweet? y/n: ")
         if confirm in ["n", "no"]:
-            print("Retweet cancelled.")
+            print_string("Retweet cancelled.")
         else:
-            print("Retweeted - %s" % (convert_date(TODAY)))
+            print_string("Retweeted - %s" % (convert_date(TODAY)))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
             press_enter()
@@ -209,7 +252,7 @@ class Tweet:
         """Returns True if all terms do not exceed restriction length"""
         for term in self.terms:
             if len(term) > 10:
-                print("%s is too long. Must be 10 characters or less.\n" % (term))
+                print_string("%s is too long. Must be 10 characters or less.\n" % (term))
                 self.terms = []
                 return False
         return True
@@ -306,17 +349,19 @@ class TweetSearch:
   
     def display_tweets(self):
         """Display resulting tweets 5 at a time ordered by date"""
+        print('\n' + BORDER2)
+        print_string("Home".upper())
+        print(BORDER2)
+
         for i, tweet in enumerate(self.tweets):
-            print("Tweet %d" % (i + 1))
-   
             rt_user = tweet.retweeter()
             if rt_user and tweet.author() != rt_user: 
-                tweet.display(rt_user)
+                tweet.display(index=i, rt_user=rt_user)
             else:
-                tweet.display() 
+                tweet.display(index=i) 
 
         if len(self.tweets) == 0:
-            print("You have no tweets yet.")
+            print_string("You have no tweets yet.")
 
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 
@@ -358,7 +403,7 @@ class TweetSearch:
             choices.append(tweet_str)
 
         choices.extend(["Home", "Logout"])
-        display_selections(choices)
+        display_selections(choices, "Tweet Selection")
         choice = validate_num(SELECT, self.session.home, size=len(choices)) - 1
 
         if choices[choice] == 'Home':

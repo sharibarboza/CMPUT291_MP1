@@ -124,7 +124,7 @@ def user_exists(curs, user):
     :param curs: cursor object
     :param user: user id (must be a number)
     """
-    curs.execute('select usr from users where usr=:1', [user])
+    curs.execute("select usr from users where usr like '%%' || :1 || '%%'", [user])
     return curs.fetchone() is not None 
 
 def follows_exists(curs, flwer, flwee):
@@ -152,7 +152,7 @@ def hashtag_exists(curs, term):
     :param curs: cursor object
     :param term: hashtag word
     """
-    curs.execute('select term from hashtags where term=:1', [term])
+    curs.execute("select term from hashtags where term like '%%' || :1 || '%%'", [term])
     return curs.fetchone() is not None
 
 def mention_exists(curs, tid, term):
@@ -162,7 +162,7 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute('select term from mentions where tid=:1 and term=:2',
+    curs.execute("select term from mentions where tid=:1 and term like '%%' || :2 || '%%'",
         [tid, term])
     return curs.fetchone() is not None
 
@@ -284,7 +284,7 @@ def match_tweet(curs, keywords, order):
     if len(keywords) == 0:
         return
 
-    q = "select t.tid, t.writer, t.tdate, t.text, t.replyto from tweets t " \
+    q = "select distinct t.tid, t.writer, t.tdate, t.text, t.replyto from tweets t " \
         "left outer join mentions m on t.tid=m.tid where"
     term_q = " m.term like '%%' || :%d || '%%'"
     text_q = " lower(t.text) like '%%' || :%d || '%%' and" \
