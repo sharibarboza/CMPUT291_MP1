@@ -146,7 +146,7 @@ class Tweet:
         col2_width = BORDER_LEN - col1_width - 3 
 
         date_line = "%s" % (self.date_str)
-        date_user = "%s - %d (%s)" % (date_line, self.writer, self.writer_name)
+        date_user = "%d (%s) - %s" % (self.writer, self.writer_name, date_line)
         blank = " " * col1_width
 
         text_len = 58
@@ -165,10 +165,10 @@ class Tweet:
             text1 = "@%s %s" % (self.reply_user, text1) 
 
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
-        line1_2 = "| {:{width}}".format(date_user, width=col2_width)
-        line2_2 = "| {:{width}}".format(text1, width=col2_width)
-        line3_2 = "| {:{width}}".format(text2, width=col2_width)
-        line4_2 = "| {:{width}}".format(" ", width=col2_width)
+        line1_2 = "  {:{width}}".format(date_user, width=col2_width)
+        line2_2 = "  {:{width}}".format(text1, width=col2_width)
+        line3_2 = "  {:{width}}".format(text2, width=col2_width)
+        line4_2 = "  {:{width}}".format(" ", width=col2_width)
 
         if rt_user is not None:
             user_name = get_name(self.curs, rt_user)
@@ -176,14 +176,16 @@ class Tweet:
             line4_2 = line3_2
             line3_2 = line2_2
             line2_2 = line1_2
-            line1_2 = "| {:{width}}".format(retweeted, width=col2_width)
+            line1_2 = "  {:{width}}".format(retweeted, width=col2_width)
 
         print_string(line1_1 + line1_2)
         print_string(blank + line2_2)
-        print_string(blank + line3_2)
+        
+        if line3_2[2] != " ":
+            print_string(blank + line3_2)
         if line4_2[2] != " ":
             print_string(blank + line4_2)
-        print_border(thick=False)
+        print_border(thick=False, sign='|')
 
     def display_stats(self):
         """ Displays statistics on a tweet after a tweet has been selected"""

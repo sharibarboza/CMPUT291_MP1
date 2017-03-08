@@ -5,7 +5,7 @@ SELECT = "Enter your selection: "
 TODAY = datetime.today()
 
 # Util methods
-def print_border(length=BORDER_LEN, thick=False, sign='|'):
+def print_border(length=BORDER_LEN, thick=False, sign='+'):
     """Prints border with different length"""
     if thick:
         print(sign + '=' * length + sign)
@@ -68,24 +68,23 @@ def remove_hashtags(keywords):
         new_list.append(word)
     return new_list
 
-def display_selections(selections, title_menu=None, length=BORDER_LEN, thick=True, border=True):
+def display_selections(selections, title_menu=None, length=BORDER_LEN, thick=True, no_border=False):
     """Helper method for easily displaying numbered lists   
  
     :param selections: A list containing each menu item
     :param title_menu (optional): string title
     """
     if title_menu:
-        if border:
-            print_border(length, thick)
+        if not no_border:
+            print_border(length, thick=True) 
         print_string(title_menu.upper(), length=length)
-        if border:
-         print_border(length, thick)
+        if not no_border:        
+            print_border(length, thick=True, sign='|')
 
     for i, choice in enumerate(selections, 1):
     	print_string("%d. %s" % (i, choice), length=length)
 
-    if border:
-        print_border(length, False)
+    print_border(length, False)
 
 def check_quit(user_input):
     """Checks if a user entered a quit message

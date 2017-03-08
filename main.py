@@ -4,7 +4,7 @@ from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
-from mlist import manage_lists
+from mlist import ListManager 
 
 """
 CMPUT 291 Mini Project 1
@@ -22,7 +22,8 @@ class Session:
         self.logged_user = None
         self.name = None
         self.tweets = None
-        self.s_tweets = None      
+        self.s_tweets = None
+        self.lists = None 
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
@@ -60,7 +61,7 @@ class Session:
         """
         width = 60
         print_border(width, True)
-        print_string("         WELCOME TO TWITTER - COMMAND LINE CLIENT", length=width)
+        print_string("            WELCOME TO THE TWITTER DATABASE", length=width)
         print_string(" Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza", length=width)
         print_border(width, True)
         print_string("            1. Login   2. Sign-Up   3. Exit", length=width)
@@ -102,7 +103,8 @@ class Session:
             self.username = None
         else:
             self.name = row[2].rstrip()
-            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)	
+            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)
+            self.lists = ListManager(self)	
 
         if self.username is None:
             self.start_up()
@@ -168,8 +170,7 @@ class Session:
     
             if t.more_tweets_exist():
                 choices.insert(1, "See more tweets")
-    
-        display_selections(choices, "Main Menu")
+        display_selections(choices, "Main Menu", no_border=True)
         return choices
 
     def home(self):
@@ -181,10 +182,11 @@ class Session:
                 title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
             else: 
                 title = "HOME"
-            
-            print_border(thick=True)
+           
+            print('\n')
+            print_border(thick=True) 
             split_title(title, self.logged_user)
-            print_border(thick=True)
+            print_border(thick=True, sign='|') 
 
             t.display_tweets()
             choices = self._main_menu(t)
@@ -225,7 +227,7 @@ class Session:
             elif option == 'Compose tweet':
                 compose_tweet(self, self.username, menu_func=self.home)
             elif option == 'Manage lists':
-                manage_lists(self)
+                self.lists.manage_lists() 
             elif option == 'Logout':
                 self.logout()
    
