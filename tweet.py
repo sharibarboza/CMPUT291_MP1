@@ -19,11 +19,8 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     insert_tweet(session.get_conn(), new_tweet.get_values())
     new_tweet.insert_terms()
 
-    print_border(thick=False)
-    print_string("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
-    print_string("Hashtags mentioned: %s" % (new_tweet.get_terms()))
-    print_border(thick=False)
-
+    print("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
+    print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
     press_enter()
 
 def create_tweet(session, user, menu_func, replyto):
@@ -190,9 +187,9 @@ class Tweet:
 
     def display_stats(self):
         """ Displays statistics on a tweet after a tweet has been selected"""
-        print_border(50, True)
+        print_border(thick=True)
         print_string("Tweet Statistics".upper())
-        print_border(50, True)
+        print_border(thick=True)
         print_string("Tweet ID: %d" % (self.id))
         print_string("Written by: %s @%d" % (self.writer_name, self.writer))
         print_string("Posted: %s" % (self.date_str))
@@ -216,22 +213,20 @@ class Tweet:
     def retweet(self):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
-            print_border(50, False)
+            print_border(thick=False)
             print_string("You already retweeted this tweet.")
-            print_border(50, False)
+            print_border(thick=False)
             return
             
-        print(BORDER)
+        print_border(thick=False)
         self.display(rt_user=self.user)
         confirm = validate_yn("Confirm retweet? y/n: ", self.session)
         if confirm in ["n", "no"]:
-            print_string("Retweet cancelled.")
+            print("Retweet cancelled.")
         else:
-            print_border(50, False)
-            print_string("Retweeted - %s" % (convert_date(TODAY)))
+            print("Retweeted - %s" % (convert_date(TODAY)))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
-            print_border(50, False)
 
             press_enter()
 
@@ -377,7 +372,7 @@ class TweetSearch:
 
         if len(self.tweets) == 0:
             print_string("You have no tweets yet.")
-            print_border(50, False)
+            print_border(thick=False)
 
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 
@@ -385,7 +380,7 @@ class TweetSearch:
         Returns the selected option from the tweet menu
         """
         choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
-        print(BORDER2)
+        print_border(thick=False)
         display_selections(choices)
 
         return choices
