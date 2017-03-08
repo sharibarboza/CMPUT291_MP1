@@ -1,6 +1,5 @@
 from utils import *
 from queries import *
-#from mlist import manage_lists
 ##here are functions in lists' home
 
 def answer_check(prompt):
@@ -30,19 +29,19 @@ def has_list(curs,  owner):
 #  input user name
 #  output user's list
 #############################################
-def get_users_l(username,curs,con):
+def get_users_l(username, curs, con):
     width = BORDER_LEN
-    print_border(length=width, thick=False)
-    if has_list(curs,username) :
-        curs.execute("select lname from lists where owner =:1",[username])
+    if has_list(curs, username):
+        print_border(length=width, thick=False)
+        curs.execute("select lname from lists where owner=:1",[username])
         rows = curs.fetchall()
         print_string("YOUR LISTS:", length=width)
-        print_border(length=width, thick=False)
+        print_border(length=width, thick=False, sign='|')
         for row in rows:
             print_string(row[0], length=width)
+        print_border(length=width, thick=False)
     else:
-        print("You dont have any lists.")
-    print_border(length=width, thick=False)
+        print("You do not have any lists.")
     return
 
 
@@ -63,7 +62,7 @@ def get_lhas_user(username,curs):
 
     print_border(BORD_LEN, False)
     print_string(headers, length=BORD_LEN)
-    print_border(BORD_LEN, False)
+    print_border(BORD_LEN, False, sign='|')
 
     for row in rows:
         owner = row[0]
@@ -80,12 +79,12 @@ def get_lhas_user(username,curs):
 #  input user name
 #  output
 #############################################
-def create_l(session, username,curs,con) :
+def create_l(session, username, curs, con, manage_lists) :
     prompt = "Enter your list name (less than 12 char): "
-    lname = validate_str(prompt,session, length=12)
+    lname = validate_str(prompt,session, menu_func=manage_lists, length=12)
     while ( list_exists(curs,lname,username)):
         prompt = "That list exists, please enter other name: "
-        lname = validate_str(prompt, session, length=12)
+        lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     prompt = "You want to create list name as "+lname+"? y/n: "
     if answer_check(prompt) :
     ##create table
@@ -96,17 +95,17 @@ def create_l(session, username,curs,con) :
     return
 
 
-def add_lmember(session, username,curs,con):
+def add_lmember(session, username, curs, con, manage_lists):
     get_users_l(username,curs,con)
     prompt = "Enter the list name: "
-    lname = validate_str(prompt, session, length=12)
+    lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
         press_enter()
         add_lmember(session, username, curs, con)
     else:
         prompt = "Enter the member you want to add: "
-        member = validate_num(prompt, session)
+        member = validate_num(prompt, session, menu_func=manage_lists)
         if (member_exists(curs,lname,member) or not user_exists(curs,member)):
             print("The user already exists in this list or the user does not exist!")
             press_enter()
@@ -122,10 +121,10 @@ def add_lmember(session, username,curs,con):
     return
 
 
-def delete_lmember(session, username,curs,con):
+def delete_lmember(session, username, curs, con, manage_lists):
     get_users_l(username,curs,con)
     prompt = "Enter the list name: "
-    lname = validate_str(prompt, session, length=12)
+    lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
         press_enter()
@@ -135,7 +134,7 @@ def delete_lmember(session, username,curs,con):
         rows = curs.fetchall()     
         list_members(curs, lname, rows)
         prompt = "Enter the member you want to delete: "
-        member = validate_num(prompt, session)
+        member = validate_num(prompt, session, menu_func=manage_lists)
         if (not member_exists(curs,lname,member) or not user_exists(curs,member)):
             print("The user does not exist in this list or the user does not exist! ")
             press_enter()
