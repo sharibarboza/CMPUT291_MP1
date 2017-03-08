@@ -49,7 +49,7 @@ def insert_hashtag(conn, term):
     :param term: single string containing a hashtag term
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into hashtags(term) values(:1)", [term])
+    cursInsert.execute("insert into hashtags(term) values(:1)", [term.lower()])
     conn.commit()
 
     return cursInsert

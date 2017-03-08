@@ -1,4 +1,3 @@
-from constants import SELECT, TODAY, BORDER, BORDER_LEN
 from utils import *
 from queries import * 
 
@@ -20,10 +19,10 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     insert_tweet(session.get_conn(), new_tweet.get_values())
     new_tweet.insert_terms()
 
-    print(BORDER)
+    print_border(thick=False)
     print_string("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
     print_string("Hashtags mentioned: %s" % (new_tweet.get_terms()))
-    print(BORDER)
+    print_border(thick=False)
 
     press_enter()
 
@@ -36,7 +35,7 @@ def create_tweet(session, user, menu_func, replyto):
     :param replyto: id of user to replyto or None
     """
     text = validate_str("Enter tweet: ", session, menu_func=menu_func)
-    print('\n' + BORDER)
+    print_border(thick=False)
 
     writer = user
     tid = generate_tid(session.get_conn())
@@ -141,49 +140,59 @@ class Tweet:
         :param index (optional): tweet number (1-5)  
         :param user (optional): user id of the user who retweeted this tweet
         """
-        col1_width = 25
-        col2_width = BORDER_LEN - col1_width - 1
-
         if index is not None: 
             tweet_index = "Tweet %d" % (index + 1)
         else:
-            tweet_index = "Tweet %d" % (self.id) 
+            tweet_index = "Tweet %d" % (self.id)
 
-        date_line = "| %s" % (self.date_str)
-        user_id = "%d (%s)" % (self.writer, self.writer_name)
-        
+        col1_width = len(tweet_index) + 1
+        col2_width = BORDER_LEN - col1_width - 3 
+
+        date_line = "%s" % (self.date_str)
+        date_user = "%s - %d (%s)" % (date_line, self.writer, self.writer_name)
+        blank = " " * col1_width
+
+        text_len = 58
+        space_index = -1
+        if len(self.text) > text_len:
+            space_index = self.text.find(' ', text_len)
+
+        if space_index > 0:
+            text1 = self.text[:space_index + 1]
+            text2 = self.text[space_index + 1:]
+        else:
+            text1 = self.text
+            text2 = " "
 
         if self.replyto is not None:
-            rep_str = "@%d (%s)" % (self.reply_user, self.reply_name)
-            text_str = "| @%s %s" % (self.reply_user, self.text) 
-        else:
-            rep_str = " "
-            text_str = "| " + self.text
+            text1 = "@%s %s" % (self.reply_user, text1) 
 
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
-        line2_1 = "{:{width}}".format(user_id, width=col1_width)
-        line3_1 = "{:{width}}".format(rep_str, width=col1_width)
-        line1_2 = "{:{width}}".format(date_line, width=col2_width)
-        line2_2 = "{:{width}}".format(text_str, width=col2_width)
-        line3_2 = "| "
+        line1_2 = "| {:{width}}".format(date_user, width=col2_width)
+        line2_2 = "| {:{width}}".format(text1, width=col2_width)
+        line3_2 = "| {:{width}}".format(text2, width=col2_width)
+        line4_2 = "| {:{width}}".format(" ", width=col2_width)
 
         if rt_user is not None:
             user_name = get_name(self.curs, rt_user)
-            retweeted = "| %s Retweeted" % user_name
+            retweeted = "%s Retweeted" % user_name
+            line4_2 = line3_2
             line3_2 = line2_2
             line2_2 = line1_2
-            line1_2 = "{:{width}}".format(retweeted, width=col2_width)
+            line1_2 = "| {:{width}}".format(retweeted, width=col2_width)
 
         print_string(line1_1 + line1_2)
-        print_string(line2_1 + line2_2)
-        print_string(line3_1 + line3_2)
-        print(BORDER)
+        print_string(blank + line2_2)
+        print_string(blank + line3_2)
+        if line4_2[2] != " ":
+            print_string(blank + line4_2)
+        print_border(thick=False)
 
     def display_stats(self):
         """ Displays statistics on a tweet after a tweet has been selected"""
-        print('\n' + BORDER2)
+        print_border(50, True)
         print_string("Tweet Statistics".upper())
-        print(BORDER2)
+        print_border(50, True)
         print_string("Tweet ID: %d" % (self.id))
         print_string("Written by: %s @%d" % (self.writer_name, self.writer))
         print_string("Posted: %s" % (self.date_str))
@@ -207,9 +216,9 @@ class Tweet:
     def retweet(self):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
-            print(BORDER)
+            print_border(50, False)
             print_string("You already retweeted this tweet.")
-            print(BORDER)
+            print_border(50, False)
             return
             
         print(BORDER)
@@ -218,11 +227,11 @@ class Tweet:
         if confirm in ["n", "no"]:
             print_string("Retweet cancelled.")
         else:
-            print(BORDER)
+            print_border(50, False)
             print_string("Retweeted - %s" % (convert_date(TODAY)))
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
-            print(BORDER)
+            print_border(50, False)
 
             press_enter()
 
@@ -239,7 +248,7 @@ class Tweet:
         hashtags = self.find_hashtags() 
 
         for tag in hashtags:
-            term = self.extract_term(tag)
+            term = self.extract_term(tag).lower()
             self.terms.append(term)
         
     def insert_terms(self):
@@ -368,7 +377,7 @@ class TweetSearch:
 
         if len(self.tweets) == 0:
             print_string("You have no tweets yet.")
-            print(BORDER + '\n')
+            print_border(50, False)
 
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 

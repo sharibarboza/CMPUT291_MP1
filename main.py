@@ -1,10 +1,10 @@
 import sys
 
 from connect import get_connection
-from constants import BORDER, SELECT
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
+from mlist import manage_lists
 
 """
 CMPUT 291 Mini Project 1
@@ -58,17 +58,18 @@ class Session:
         """Displays start up screen to provide options for both
         registered and unregistered users 
         """
-        print(BORDER2)
-        print_string("WELCOME TO TWITTER - A COMMAND LINE CLIENT")
-        print_string("Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza")
-        print(BORDER2)
-        choices = ["Login", "Sign-Up", "Exit"]
-        display_selections(choices)
-        print_string("INPUT INSTRUCTIONS:") 
-        print_string("Enter a number specified by the menu to select an option.") 
-        print_string("Enter control-C any time to immediately exit the program.")
-        print_string("Enter q, quit, or exit to cancel input and return to the previous screen.")
-        print(BORDER)
+        width = 60
+        print_border(width, True)
+        print_string("         WELCOME TO TWITTER - COMMAND LINE CLIENT", length=width)
+        print_string(" Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza", length=width)
+        print_border(width, True)
+        print_string("            1. Login   2. Sign-Up   3. Exit", length=width)
+        print_border(width, False)
+        print_string("INPUT INSTRUCTIONS:", length=width) 
+        print_string("Enter a number specified by the menu to select an option.", length=width) 
+        print_string("Enter control-C any time to immediately exit the program.", length=width)
+        print_string("Enter q, quit, or exit to cancel input and go back.", length=width)
+        print_border(width, True)
         choice = validate_num(SELECT, self, self.exit, size=3)
 
         if choice == 1:
@@ -82,7 +83,7 @@ class Session:
 
     def exit(self):
         """Exit from the system and close database"""
-        print("\nThank you for using Twitter. Existing database ...")
+        print("\nThank you for using Twitter. Closing the database ...")
 
         self.curs.close()
         self.conn.close()
@@ -119,7 +120,7 @@ class Session:
         timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self, self.start_up, 4)
 
-        print(BORDER)
+        print_border(50, False)
         print("Name: %s, Email: %s, City: %s, Timezone: %d" % (name, email, city, timezone))
         confirm = validate_yn("Confirm user? y/n: ", self)
 
@@ -181,9 +182,9 @@ class Session:
             else: 
                 title = "HOME"
             
-            print('\n' + BORDER2)
+            print_border(thick=True)
             split_title(title, self.logged_user)
-            print(BORDER2)
+            print_border(thick=True)
 
             t.display_tweets()
             choices = self._main_menu(t)
@@ -223,6 +224,8 @@ class Session:
                 self.s_tweets = search_tweets(self, self.username) 
             elif option == 'Compose tweet':
                 compose_tweet(self, self.username, menu_func=self.home)
+            elif option == 'Manage lists':
+                manage_lists(self)
             elif option == 'Logout':
                 self.logout()
    

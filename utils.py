@@ -1,19 +1,28 @@
 from datetime import datetime
 
-from constants import BORDER_LEN, BORDER, BORDER2
+BORDER_LEN = 80
+SELECT = "Enter your selection: "
+TODAY = datetime.today()
 
 # Util methods
-def format_string(string, no_border=False):
+def print_border(length=BORDER_LEN, thick=False, sign='|'):
+    """Prints border with different length"""
+    if thick:
+        print(sign + '=' * length + sign)
+    else:
+        print(sign + '-' * length + sign)
+
+def format_string(string, no_border=False, length=BORDER_LEN):
     """Format string for input"""
     if no_border:
         return "  " + string
     else:
         str1 = "| " + string
-        return str1 + " " * (BORDER_LEN - len(str1) + 1) + "|"  
+        return str1 + " " * (length - len(str1) + 1) + "|"  
 
-def print_string(string, no_border=False):
+def print_string(string, no_border=False, length=BORDER_LEN):
     """Prints a string with border lines"""
-    print(format_string(string, no_border))
+    print(format_string(string, no_border, length))
 
 def split_title(title, string):
     """Prints a title and another string justified to the right"""
@@ -59,20 +68,24 @@ def remove_hashtags(keywords):
         new_list.append(word)
     return new_list
 
-def display_selections(selections, title_menu=None):
+def display_selections(selections, title_menu=None, length=BORDER_LEN, thick=True, border=True):
     """Helper method for easily displaying numbered lists   
  
     :param selections: A list containing each menu item
     :param title_menu (optional): string title
     """
     if title_menu:
-        print('\n' + BORDER2)
-        print_string(title_menu.upper())
-        print(BORDER2)
+        if border:
+            print_border(length, thick)
+        print_string(title_menu.upper(), length=length)
+        if border:
+         print_border(length, thick)
 
     for i, choice in enumerate(selections, 1):
-    	print_string("%d. %s" % (i, choice))
-    print(BORDER)
+    	print_string("%d. %s" % (i, choice), length=length)
+
+    if border:
+        print_border(length, False)
 
 def check_quit(user_input):
     """Checks if a user entered a quit message
