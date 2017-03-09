@@ -4,6 +4,7 @@ from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
+from user import UserSearch, search_users 
 from mlist import ListManager 
 
 """
@@ -23,6 +24,8 @@ class Session:
         self.name = None
         self.tweets = None
         self.s_tweets = None
+        self.s_users = None
+        self.current = None
         self.lists = None 
 
         if not tStat_exists(self.curs):
@@ -147,10 +150,11 @@ class Session:
     def get_home_tweets(self):
         """Gets the tweets of users being followed by the user"""
         self.tweets = TweetSearch(self)
+        self.current = self.tweets
         self.tweets.get_user_tweets()
         self.home()
 
-    def _main_menu(self, t):
+    def _main_menu(self):
         """Displays the main functionality menu
     
         :param t: TweetSearch object (can be self.tweets or self.s_tweets)
@@ -165,36 +169,31 @@ class Session:
         ]
 
         # Allow tweet selection if user has any tweets
-        if t.tweets_exist():
-            choices.insert(0, "Select a tweet")
+        if self.current.results_exist():
+            choices.insert(0, "Select a result")
     
-            if t.more_tweets_exist():
-                choices.insert(1, "See more tweets")
+            if self.current.more_results_exist():
+                choices.insert(1, "See more results")
         display_selections(choices, "Main Menu", no_border=True)
         return choices
 
     def home(self):
         """Displays main system functionalities menu"""
         while True:          
-            t = self.s_tweets if self.s_tweets else self.tweets
-           
             print_newline()
             print_border(thick=True) 
-            if self.s_tweets:
-                title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
+            if self.current.category() in ["SearchTweet", "SearchUser"]: 
+                title = "SEARCH RESULTS FOR %s" % (self.current.get_searched().upper())
                 print_string(title)
             else: 
                 title = "HOME"
                 split_title(title, self.logged_user)
             print_border(thick=True, sign='|') 
 
-            t.display_tweets()
-            choices = self._main_menu(t)
+            self.current.display_results()
+            choices = self._main_menu()
             choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
-
-            if self.s_tweets and option not in ['Select a tweet', 'See more tweets']:
-                self.s_tweets = None
 
             """
             Main outline for program
@@ -218,12 +217,14 @@ class Session:
             """
 
             # Currently operating functionalties
-            if option == 'Select a tweet':
-                t.choose_tweet()
-            elif option == 'See more tweets':
-                t.more_tweets()
+            if option == 'Select a result':
+                self.current.choose_result()
+            elif option == 'See more results':
+                self.current.more_results()
             elif option == 'Search tweets':
-                self.s_tweets = search_tweets(self, self.username) 
+                self.current = search_tweets(self)
+            elif option == 'Search users':
+                self.current = search_users(self) 
             elif option == 'Compose tweet':
                 compose_tweet(self, self.username, menu_func=self.home)
             elif option == 'Manage lists':

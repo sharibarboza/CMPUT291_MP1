@@ -264,6 +264,11 @@ def get_ret_cnt(curs, tid):
     curs.execute('select ret_cnt from tStat where tid=:1', [tid])
     return curs.fetchone()
 
+def get_hashtags(curs, tid):
+    """ Get all the hashtags for a tweet"""
+    curs.execute('select term from mentions m where m.tid=:1', [tid])
+    return [row[0].rstrip() for row in curs.fetchall()] 
+
 def already_retweeted(curs, user, tid):
     """ Returns true if the user has already tweeted the specific tweet
     

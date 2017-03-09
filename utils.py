@@ -115,15 +115,16 @@ def press_enter(prompt="Press Enter to continue."):
     """
     input(prompt)
 
-def validate_str(prompt, session, menu_func=None, length=None):
+def validate_str(prompt, session, menu_func=None, length=None, null=True):
     """Used for when user needs to input words
     Commonly used for validating insert values  
     If you are passing a function name, make sure to not put () so it won't be called
  
     :param prompt: string message
+    :param session: Session object
     :param menu_func: if user enters quit, return to this function
     :param length (optional): restricts the number of characters
-    :param session: Session object, for when user exits program
+    :param null (optional): if False, doesn't accept empty string
     """
     valid = False
     usr_input = None
@@ -134,7 +135,9 @@ def validate_str(prompt, session, menu_func=None, length=None):
         except KeyboardInterrupt:
             session.exit() 
         if check_quit(usr_input):
-            exit_input(usr_input, menu_func) 
+            exit_input(usr_input, menu_func)
+        if not null and len(usr_input) <= 0:
+            valid = False 
         if length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
