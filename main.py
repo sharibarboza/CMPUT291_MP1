@@ -1,10 +1,10 @@
 import sys
 
 from connect import get_connection
-from constants import BORDER, SELECT
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
+from mlist import ListManager 
 
 """
 CMPUT 291 Mini Project 1
@@ -19,8 +19,11 @@ class Session:
         self.conn = self.connect() 
         self.curs = self.conn.cursor()
         self.username = None
+        self.logged_user = None
+        self.name = None
         self.tweets = None
-        self.s_tweets = None      
+        self.s_tweets = None
+        self.lists = None 
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
@@ -48,13 +51,27 @@ class Session:
         """Return the logged in user id"""
         return self.username
 
+    def get_name(self):
+        """Return the user's first and last name"""
+        return self.name
+
     def start_up(self):
         """Displays start up screen to provide options for both
         registered and unregistered users 
         """
-        choices = ["Login", "Sign up", "Exit"]
-        display_selections(choices, "Welcome to Twitter")
-        choice = validate_num(SELECT, self.exit, size=len(choices))
+        width = 60
+        print_border(width, True)
+        print_string("            WELCOME TO THE TWITTER DATABASE", length=width)
+        print_string(" Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza", length=width)
+        print_border(width, True, sign='|')
+        print_string("            1. Login   2. Sign-Up   3. Exit", length=width)
+        print_border(width, False, sign='|')
+        print_string("INPUT INSTRUCTIONS:", length=width) 
+        print_string("Enter a number specified by the menu to select an option.", length=width) 
+        print_string("Enter control-C any time to immediately exit the program.", length=width)
+        print_string("Enter q, quit, or exit to cancel input and go back.", length=width)
+        print_border(width, True)
+        choice = validate_num(SELECT, self, self.exit, size=3)
 
         if choice == 1:
     	    self.login()
@@ -67,6 +84,8 @@ class Session:
 
     def exit(self):
         """Exit from the system and close database"""
+        print("\nThank you for using Twitter. Closing the database ...")
+
         self.curs.close()
         self.conn.close()
         sys.exit()
@@ -75,39 +94,45 @@ class Session:
         """Allows returning user to sign in. Will return to the start
         up screen if login fails
         """
-        self.username = validate_num("Enter username: ", self.start_up)
-        password = validate_str("Enter password: ", self.start_up, 4)
+        self.username = validate_num("Enter username: ", self, menu_func=self.start_up)
+        password = validate_str("Enter password: ", self, self.start_up, 4)
         row = find_user(self.curs, self.username, password)
 
         if row is None:
             print_string("Username and/or password not valid.\n")
-            self.username = None	
+            self.username = None
         else:
-            name = row[2].rstrip()
-            first_name = name.split()[0]
-            print("Welcome back, %s." % (first_name))
+            self.name = row[2].rstrip()
+            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)
+            self.lists = ListManager(self)	
 
         if self.username is None:
             self.start_up()
 
     def logout(self):
         """Logs user out of the system. Returns user to start up screen"""
-        print_string("Logged out.")
         self.start_up()
 
     def signup(self):
         """Creates a new user and inserts user into the database"""
         self.username = self.generate_user()
-        name = validate_str("Enter your name: ", self.start_up, 20)
-        email = validate_str("Enter your email: ", self.start_up, 15)
-        city = validate_str("Enter your city: ", self.start_up, 12)
-        timezone = validate_num("Enter your timezone: ", self.start_up, num_type='float')
-        password = validate_str("Enter your password: ", self.start_up, 4)
+        name = validate_str("Enter your name: ", self, self.start_up, 20)
+        email = validate_str("Enter your email: ", self, self.start_up, 15)
+        city = validate_str("Enter your city: ", self, self.start_up, 12)
+        timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
+        password = validate_str("Enter your password: ", self, self.start_up, 4)
 
-        print("Welcome %s! Your new user id is %d." % (name, self.username))
+        print_border(50, False)
+        print("Name: %s, Email: %s, City: %s, Timezone: %d" % (name, email, city, timezone))
+        confirm = validate_yn("Confirm user? y/n: ", self)
 
-        data = [self.username, password, name, email, city, timezone]
-        insert_user(self.conn, data)
+        if confirm in ["y", "yes"]:
+            print("Welcome %s! Your new user id is %d." % (name, self.username))
+            data = [self.username, password, name, email, city, timezone]
+            insert_user(self.conn, data)
+            press_enter()
+        else:
+            self.start_up()
 
     def generate_user(self):
         """Generates a new unique user id for user sign-up"""
@@ -145,17 +170,27 @@ class Session:
     
             if t.more_tweets_exist():
                 choices.insert(1, "See more tweets")
-    
-        display_selections(choices, "Main Menu")
+        display_selections(choices, "Main Menu", no_border=True)
         return choices
 
     def home(self):
         """Displays main system functionalities menu"""
         while True:          
             t = self.s_tweets if self.s_tweets else self.tweets
+           
+            print_newline()
+            print_border(thick=True) 
+            if self.s_tweets:
+                title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
+                print_string(title)
+            else: 
+                title = "HOME"
+                split_title(title, self.logged_user)
+            print_border(thick=True, sign='|') 
+
             t.display_tweets()
             choices = self._main_menu(t)
-            choice = validate_num(SELECT, self.start_up, size=len(choices)) - 1
+            choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
 
             if self.s_tweets and option not in ['Select a tweet', 'See more tweets']:
@@ -190,7 +225,9 @@ class Session:
             elif option == 'Search tweets':
                 self.s_tweets = search_tweets(self, self.username) 
             elif option == 'Compose tweet':
-                compose_tweet(self.conn, self.username, menu_func=self.home)
+                compose_tweet(self, self.username, menu_func=self.home)
+            elif option == 'Manage lists':
+                self.lists.manage_lists() 
             elif option == 'Logout':
                 self.logout()
    

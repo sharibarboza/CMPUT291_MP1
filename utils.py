@@ -1,26 +1,44 @@
 from datetime import datetime
 
-from constants import BORDER_LEN, BORDER, BORDER2
+BORDER_LEN = 80
+SELECT = "Enter your selection: "
+TODAY = datetime.today()
 
 # Util methods
-def format_string(string, no_border=False):
+def print_border(length=BORDER_LEN, thick=False, sign='+'):
+    """Prints border with different length"""
+    if thick:
+        print(sign + '=' * length + sign)
+    else:
+        print(sign + '-' * length + sign)
+
+def print_newline(length=BORDER_LEN, no_border=True):
+    """Prints a blank space with borders"""
+    print_string(" ", no_border=no_border, length=length)
+
+def format_string(string, no_border=False, length=BORDER_LEN):
     """Format string for input"""
     if no_border:
         return "  " + string
     else:
         str1 = "| " + string
-        return str1 + " " * (BORDER_LEN - len(str1) + 1) + "|"  
+        return str1 + " " * (length - len(str1) + 1) + "|"  
 
-def print_string(string, no_border=False):
+def print_string(string, no_border=False, length=BORDER_LEN):
     """Prints a string with border lines"""
-    print(format_string(string, no_border))
+    print(format_string(string, no_border, length))
+
+def split_title(title, string):
+    """Prints a title and another string justified to the right"""
+    space_length = BORDER_LEN - len(string) - len(title) - 2
+    print_string(title + ' ' * (space_length) + string) 
 
 def convert_date(date_obj):
     """Convert a datetime.datetime object from a query into a string
     
     :param data_obj: datetime.datetime object
     """
-    return datetime.strftime(date_obj, "%b %d %Y")
+    return datetime.strftime(date_obj, "%b %-d %Y")
 
 def convert_keywords(keywords, lower=True):
     """Takes in string input from user, replaces commas, and converts to list
@@ -54,19 +72,23 @@ def remove_hashtags(keywords):
         new_list.append(word)
     return new_list
 
-def display_selections(selections, title_menu=None):
+def display_selections(selections, title_menu=None, length=BORDER_LEN, thick=True, no_border=False):
     """Helper method for easily displaying numbered lists   
  
-    param selections: A list containing each menu item
+    :param selections: A list containing each menu item
+    :param title_menu (optional): string title
     """
     if title_menu:
-        print(BORDER2)
-        print_string(title_menu.upper())
-        print(BORDER2)
+        if not no_border:
+            print_border(length, thick=True) 
+        print_string(title_menu.upper(), length=length)
+        if not no_border:        
+            print_border(length, thick=True, sign='|')
 
     for i, choice in enumerate(selections, 1):
-    	print_string("%d. %s" % (i, choice))
-    print(BORDER)
+    	print_string("%d. %s" % (i, choice), length=length)
+
+    print_border(length, False)
 
 def check_quit(user_input):
     """Checks if a user entered a quit message
@@ -93,7 +115,7 @@ def press_enter(prompt="Press Enter to continue."):
     """
     input(prompt)
 
-def validate_str(prompt, menu_func=None, length=None):
+def validate_str(prompt, session, menu_func=None, length=None):
     """Used for when user needs to input words
     Commonly used for validating insert values  
     If you are passing a function name, make sure to not put () so it won't be called
@@ -101,12 +123,16 @@ def validate_str(prompt, menu_func=None, length=None):
     :param prompt: string message
     :param menu_func: if user enters quit, return to this function
     :param length (optional): restricts the number of characters
+    :param session: Session object, for when user exits program
     """
     valid = False
     usr_input = None
 
     while not valid:
-        usr_input = input(prompt)
+        try:
+            usr_input = input(prompt)
+        except KeyboardInterrupt:
+            session.exit() 
         if check_quit(usr_input):
             exit_input(usr_input, menu_func) 
         if length and len(usr_input) > length:
@@ -117,7 +143,7 @@ def validate_str(prompt, menu_func=None, length=None):
 
     return usr_input
 
-def validate_num(prompt, menu_func=None, size=None, num_type='int'):
+def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
     """Used for when user needs to input a single number
     Used mainly for menu selections
     If you are passing a function name, make sure to not put () so it won't be called
@@ -125,7 +151,8 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     :param prompt: string message
     :param menu_func: if user enters quit, return to this function
     :param size (optional): specifies range of numbers based on available selections
-    :param num_type (optional): validate either integer or float (default: integer) 
+    :param num_type (optional): validate either integer or float (default: integer)
+    :param session: Session object, for when user exits program
     """
     assert(num_type=='int' or num_type=='float'), "type must be either int or float"
 
@@ -150,6 +177,8 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
             else:
                 print("Please enter a number.")
             valid = False
+        except KeyboardInterrupt:
+            session.exit()
         else:
             valid = True
 
@@ -158,16 +187,20 @@ def validate_num(prompt, menu_func=None, size=None, num_type='int'):
     else:
         return float(choice)
 
-def validate_yn(prompt):
+def validate_yn(prompt, session):
     """Used for when prompting the user to enter either y/yes or n/no
     
     :param prompt: string message
+    :param session: Session object, for when user exits program 
     """
     valid = False
     choice = None
     
     while not valid:
-        choice = input(prompt)
+        try:
+            choice = input(prompt)
+        except KeyboardInterrupt:
+            session.exit()
         if choice.lower() not in ['y', 'n', 'yes', 'no']:
             print("Enter either y/yes or n/no.")
             valid = False
