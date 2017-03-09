@@ -196,13 +196,14 @@ class Tweet:
         
         if space_index > max_width:
             space_index = 0
-            for i in range(max_width, 0, -1):
+
+            i = max_width
+            while i > 0:
                 if text[i] == ' ':
                     space_index = i
-                    break
-            text1 = text[:space_index]
-            text2 = text[space_index + 1:]
-        elif space_index > 0:
+                i -= 1
+        
+        if space_index > 0:    
             text1 = text[:space_index]
             text2 = text[space_index + 1:]
        
