@@ -49,7 +49,7 @@ def insert_hashtag(conn, term):
     :param term: single string containing a hashtag term
     """
     cursInsert = conn.cursor()
-    cursInsert.execute("insert into hashtags(term) values(:1)", [term])
+    cursInsert.execute("insert into hashtags(term) values(:1)", [term.lower()])
     conn.commit()
 
     return cursInsert
@@ -162,7 +162,7 @@ def mention_exists(curs, tid, term):
     :param tid: tweet id
     :param term: hashtag word
     """
-    curs.execute("select term from mention where tid=:1 and term like '%%' || :2 || '%%'",
+    curs.execute("select term from mentions where tid=:1 and term like '%%' || :2 || '%%'",
         [tid, term])
     return curs.fetchone() is not None
 
@@ -285,22 +285,20 @@ def match_tweet(curs, keywords, order):
         return
 
     q = "select distinct t.tid, t.writer, t.tdate, t.text, t.replyto from tweets t " \
-        "left outer join mentions m on t.tid=m.tid where"
+        "full outer join mentions m on t.tid=m.tid where"
     term_q = " m.term like '%%' || :%d || '%%'"
-    text_q = " lower(t.text) like '%%' || :%d || '%%' and" \
-             " (m.term is null or m.term not like '%%' || :%d || '%%')"
-
+    text_q = " lower(t.text) like '%%' || :%d || '%%'"
+    
     if is_hashtag(keywords[0]):
         q += term_q % (1)
     else:
-        q += text_q % (1, 1)
+        q += text_q % (1)
 
-    for i in range(1, len(keywords)):
-        index = i
-        if is_hashtag(keywords[i]):
+    for i in range(2, len(keywords) + 1):
+        if is_hashtag(keywords[i-1]):
             q += " or" + term_q % (i)
         else:
-            q += " or" + text_q % (i, i)
+            q += " or" + text_q % (i)
     q += " order by %s desc" % (order)
 
     terms = remove_hashtags(keywords)
