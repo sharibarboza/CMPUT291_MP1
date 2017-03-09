@@ -1,4 +1,4 @@
-select t1.usr,t1.ee_cnt, t2.er_cnt, nvl(t3.tw_cnt,0) as tw_cnt,nvl(t4.tid,''),nvl(t4.text,''),nvl(t5.tdate,''),nvl(t5.tid,''),nvl(t5.text,''),nvl(t5.tdate,'')
+select distinct t1.usr,t1.ee_cnt, t2.er_cnt, nvl(t3.tw_cnt,0)
 From ((((select u1.usr,count(ee.flwee) as ee_cnt
         From (users u1 full outer join follows ee on ee.flwer = u1.usr)
         group by u1.usr) t1
