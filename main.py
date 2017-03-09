@@ -146,7 +146,7 @@ class Session:
 
     def get_home_tweets(self):
         """Gets the tweets of users being followed by the user"""
-        self.tweets = TweetSearch(self, self.username)
+        self.tweets = TweetSearch(self)
         self.tweets.get_user_tweets()
         self.home()
 

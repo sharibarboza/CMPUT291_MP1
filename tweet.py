@@ -1,7 +1,7 @@
 from utils import *
 from queries import * 
 
-def compose_tweet(session, user, menu_func=None, replyto=None):
+def compose_tweet(session, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
 
@@ -9,7 +9,7 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
-    new_tweet = create_tweet(session, user, menu_func, replyto)
+    new_tweet = create_tweet(session, menu_func, replyto)
  
     confirm = validate_yn("Confirm tweet? y/n: ", session)
     if confirm in ["n", "no"]:
@@ -23,7 +23,7 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
     press_enter()
 
-def create_tweet(session, user, menu_func, replyto):
+def create_tweet(session, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
 
     :param session: Session object
@@ -34,7 +34,7 @@ def create_tweet(session, user, menu_func, replyto):
     text = validate_str("Enter tweet: ", session, menu_func=menu_func)
     if len(text) > 80:
         print("Tweet is too long. Must be 80 characters or less.")
-        return create_tweet(session, user, menu_func, replyto)
+        return create_tweet(session, menu_func, replyto)
   
     print_border(thick=False)
     writer = user
@@ -43,12 +43,12 @@ def create_tweet(session, user, menu_func, replyto):
     replyto = replyto
     rt_user = None
     data = [tid, writer, date, text, replyto, rt_user]
-    new_tweet = Tweet(session, user, data)
+    new_tweet = Tweet(session, data)
     new_tweet.display()
     new_tweet.set_terms()
 
     if not new_tweet.valid_terms():
-        return create_tweet(session, user, menu_func, replyto)
+        return create_tweet(session, menu_func, replyto)
     
     return new_tweet
 
@@ -76,14 +76,14 @@ def search_tweets(session, user):
     :param user: logged in user id
     """
     search_input = validate_str("Enter keywords: ", session, session.home)
-    s_tweets = TweetSearch(session, user, search_input)
+    s_tweets = TweetSearch(session, search_input)
     s_tweets.get_search_tweets()
     return s_tweets 
 
 
 class Tweet:
 
-    def __init__(self, session, user, data):
+    def __init__(self, session, data):
         """ Represents a single tweet, helps to display tweets to console
         
         param conn: database session connection 
@@ -93,7 +93,7 @@ class Tweet:
         self.session = session
         self.conn = session.get_conn() 
         self.curs = self.conn.cursor()
-        self.user = user
+        self.user = session.get_username() 
 
         self.id = data[0]
         self.writer = data[1]
@@ -239,7 +239,7 @@ class Tweet:
 
         :param menu_func: return point if user decides to cancel reply
         """
-        compose_tweet(self.session, self.user, menu_func, replyto=self.id)
+        compose_tweet(self.session, menu_func, replyto=self.id)
 
     def retweet(self, menu_func):
         """Allows logged in user to retweet a selected tweet"""
@@ -338,7 +338,7 @@ class Tweet:
 
 class TweetSearch:
 
-    def __init__(self, session, user, keywords=''):
+    def __init__(self, session, keywords=''):
         """Can be used for getting tweets of users being 
         followed or searching for specific tweets based on keywords
          
@@ -347,7 +347,7 @@ class TweetSearch:
         """ 
         self.session = session
         self.conn = session.get_conn() 
-        self.user = user
+        self.user = session.get_username() 
         self.tweetCurs = self.conn.cursor()
         self.all_tweets = []
         self.tweets = []
@@ -380,7 +380,7 @@ class TweetSearch:
     def add_tweets(self):
         """Adds tweets from the query resuls into the all_tweets list"""
         for row in self.tweetCurs.fetchall():
-            tweet = Tweet(self.session, self.user, data=row)
+            tweet = Tweet(self.session, data=row)
             self.all_tweets.append(tweet)
 
     def add_filtered_tweets(self):
@@ -388,7 +388,7 @@ class TweetSearch:
         a keyword
         """
         for row in self.tweetCurs.fetchall():
-            tweet = Tweet(self.session, self.user, data=row)
+            tweet = Tweet(self.session, data=row)
             valid_tweet = True
             if len(self.keywords) > 0:
                 valid_tweet = self.validate_tweet(tweet)
