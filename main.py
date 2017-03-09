@@ -63,9 +63,9 @@ class Session:
         print_border(width, True)
         print_string("            WELCOME TO THE TWITTER DATABASE", length=width)
         print_string(" Created by: Hong Zhou, Haotion Zhu, and Sharidan Barboza", length=width)
-        print_border(width, True)
+        print_border(width, True, sign='|')
         print_string("            1. Login   2. Sign-Up   3. Exit", length=width)
-        print_border(width, False)
+        print_border(width, False, sign='|')
         print_string("INPUT INSTRUCTIONS:", length=width) 
         print_string("Enter a number specified by the menu to select an option.", length=width) 
         print_string("Enter control-C any time to immediately exit the program.", length=width)
@@ -177,15 +177,15 @@ class Session:
         """Displays main system functionalities menu"""
         while True:          
             t = self.s_tweets if self.s_tweets else self.tweets
-            
+           
+            print_newline()
+            print_border(thick=True) 
             if self.s_tweets:
                 title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
+                print_string(title)
             else: 
                 title = "HOME"
-           
-            print('\n')
-            print_border(thick=True) 
-            split_title(title, self.logged_user)
+                split_title(title, self.logged_user)
             print_border(thick=True, sign='|') 
 
             t.display_tweets()

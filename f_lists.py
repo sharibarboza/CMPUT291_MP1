@@ -18,12 +18,15 @@ def member_exists(curs, lname, member):
                  "and member=:2", [lname, member])
     return curs.fetchone() is not None
 
-def has_list(curs,  owner):
+def has_list(curs, owner):
     
     curs.execute("select * from lists where owner like '%%' || :1 || '%%'", [owner])
     return curs.fetchone() is not None
 
-
+def get_members(curs, username, lname):
+    curs.execute("select member from includes, lists where lists.lname =includes.lname and "
+        "lists.owner =:1 and lists.lname like '%%' || :1 ||'%%'", [username,lname])
+        
 
 #############################################
 #  input user name
@@ -42,7 +45,8 @@ def get_users_l(username, curs, con):
         print_border(length=width, thick=False)
     else:
         print("You do not have any lists.")
-    return
+        return False
+    return True
 
 
 
@@ -96,7 +100,8 @@ def create_l(session, username, curs, con, manage_lists) :
 
 
 def add_lmember(session, username, curs, con, manage_lists):
-    get_users_l(username,curs,con)
+    if not get_users_l(username,curs,con):
+        return
     prompt = "Enter the list name: "
     lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
@@ -122,7 +127,8 @@ def add_lmember(session, username, curs, con, manage_lists):
 
 
 def delete_lmember(session, username, curs, con, manage_lists):
-    get_users_l(username,curs,con)
+    if not get_users_l(username,curs,con):
+        return
     prompt = "Enter the list name: "
     lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
@@ -130,8 +136,13 @@ def delete_lmember(session, username, curs, con, manage_lists):
         press_enter()
         delete_lmember(session, username, curs, con)
     else:
-        curs.execute("select member from includes, lists where lists.lname =includes.lname and lists.owner =:1 and lists.lname like '%%' || :1 ||'%%'",[username,lname])
-        rows = curs.fetchall()     
+        get_members(curs, username, lname)
+        rows = curs.fetchall()   
+
+        if len(rows) == 0:
+            print("No members to delete.")
+            return 
+
         list_members(curs, lname, rows)
         prompt = "Enter the member you want to delete: "
         member = validate_num(prompt, session, menu_func=manage_lists)

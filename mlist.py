@@ -35,7 +35,7 @@ class ListManager:
                 "Delete a member from a list",
                 "Back to home","Log out"
             ]
-            print('\n')
+            print_newline()
             display_selections(chooses, "Manage Lists")
             num_choose = validate_num(SELECT, self.session, menu_func=self.session.home, size=len(chooses))
 

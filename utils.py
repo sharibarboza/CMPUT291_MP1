@@ -12,6 +12,10 @@ def print_border(length=BORDER_LEN, thick=False, sign='+'):
     else:
         print(sign + '-' * length + sign)
 
+def print_newline(length=BORDER_LEN, no_border=True):
+    """Prints a blank space with borders"""
+    print_string(" ", no_border=no_border, length=length)
+
 def format_string(string, no_border=False, length=BORDER_LEN):
     """Format string for input"""
     if no_border:
