@@ -379,13 +379,6 @@ class TweetSearch:
         else:
             self.category = "Home"
 
-    def close_cursor(self):
-        self.tweetCurs.close()
-
-    def close_tweets(self):
-        for tweet in self.all_tweets:
-            tweet.close_cursor()
-
     def get_category(self):
         return self.category
 
@@ -497,7 +490,6 @@ class TweetSearch:
             new_search = search_tweets(self.session)
             self.session.home(new_search)
         elif option == "Home":
-            self.close_tweets()
             self.session.home()
         elif option == "Logout":
             self.session.logout()
