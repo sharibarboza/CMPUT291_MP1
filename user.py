@@ -218,7 +218,10 @@ class UserSearch:
                 print_border(thick=False, sign='|')
 
         if len(self.users) == 0:
-            print_string("Sorry, there are no users that match that query.")
+            if self.category == "UserSearch":
+                print_string("Sorry, there are no users that match that query.")
+            else:
+                print_string("You have no followers.")
             print_border(thick=False)
 
     def select_result(self, user):
