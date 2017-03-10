@@ -320,7 +320,7 @@ class Tweet:
         """Returns True if all terms do not exceed restriction length"""
         for term in self.terms:
             if len(term) > 10:
-                print_string("%s is too long. Must be 10 characters or less.\n" % (term))
+                print("%s is too long. Must be 10 characters or less.\n" % (term))
                 self.terms = []
                 return False
         return True
