@@ -15,8 +15,6 @@ def insert_user(conn, data_list):
     cursInsert.close()
     conn.commit()
 
-    return cursInsert
-
 def insert_follow(conn, data_list):
     """ Inserts new follow relationship into follows table
 
@@ -28,8 +26,6 @@ def insert_follow(conn, data_list):
     	"values(:1,:2,:3)", data_list)
     cursInsert.close()
     conn.commit()
-
-    return cursInsert
 
 def insert_tweet(conn, data_list):
     """ Inserts new tweet into tweets table
@@ -43,8 +39,6 @@ def insert_tweet(conn, data_list):
     cursInsert.close()
     conn.commit()
 
-    return cursInsert
-
 def insert_hashtag(conn, term):
     """ Inserts new hashtag into hashtags table
 
@@ -55,8 +49,6 @@ def insert_hashtag(conn, term):
     cursInsert.execute("insert into hashtags(term) values(:1)", [term.lower()])
     cursInsert.close()
     conn.commit()
-
-    return cursInsert
 
 def insert_mention(conn, data_list):
     """ Inserts new mention into mentions table
@@ -70,8 +62,6 @@ def insert_mention(conn, data_list):
     cursInsert.close()
     conn.commit()
 
-    return cursInsert
-
 def insert_retweet(conn, data_list):
     """ Inserts new retweet into retweets table
 
@@ -83,8 +73,6 @@ def insert_retweet(conn, data_list):
         data_list)
     cursInsert.close()
     conn.commit()
-
-    return cursInsert
 
 def insert_list(conn, data_list):
     """ Inserts new list into lists table
@@ -98,8 +86,6 @@ def insert_list(conn, data_list):
     cursInsert.close()
     conn.commit()
 
-    return cursInsert
-
 def insert_include(conn, data_list):
     """ Inserts new include into includes table
 
@@ -111,8 +97,6 @@ def insert_include(conn, data_list):
         data_list)
     cursInsert.close()
     conn.commit()
-
-    return cursInsert
 
 # -------------------------- SPECIFIC SELECT QUERIES --------------------------------
 

@@ -48,11 +48,9 @@ class User:
         self.get_tweets()
 
     def user_menu(self):
-        choices = ["Go back", "Do another search", "Home", "Logout"]
+        choices = ["Follow", "Go back", "Do another search", "Home", "Logout"]
         if self.more_exist:
-            choices.insert(0, "See more tweets")
-        if self.id != self.logged_user:
-            choices.insert(0, "Follow")
+            choices.insert(1, "See more tweets")
 
         print_border(thick=True)
         display_selections(choices)
@@ -131,11 +129,6 @@ class User:
 
     def follow(self):
         if not follows_exists(self.curs, self.logged_user, self.id):
-            if self.id == self.logged_user:
-                print("You cannot follow yourself.")
-                press_enter(self.session)
-                return
-
             prompt = "Are you sure you want to follow %s? y/n: " % (self.name)
             confirm = validate_yn(prompt, self.session)
 
