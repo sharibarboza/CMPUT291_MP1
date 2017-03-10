@@ -34,7 +34,10 @@ def get_members(curs, username, lname):
 #############################################
 def get_users_l(username, curs, con):
     width = BORDER_LEN
+    has_lists = False
+
     if has_list(curs, username):
+        has_lists = True
         print_border(length=width, thick=False)
         curs.execute("select lname from lists where owner=:1",[username])
         rows = curs.fetchall()
@@ -45,8 +48,8 @@ def get_users_l(username, curs, con):
         print_border(length=width, thick=False)
     else:
         print("You do not have any lists.")
-        return False
-    return True
+
+    return has_lists
 
 
 

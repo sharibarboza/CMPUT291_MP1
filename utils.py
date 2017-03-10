@@ -53,6 +53,10 @@ def convert_keywords(keywords, lower=True):
     else:
         return [word for word in keywords] 
 
+def convert_timezone(tz):
+    """Converts an integer to a timezone UTC string"""
+    return "%03d:00" % (tz)
+
 def is_hashtag(term):
     """Return True if term is a hashtag
 
@@ -136,9 +140,9 @@ def validate_str(prompt, session, menu_func=None, length=None, null=True):
             session.exit() 
         if check_quit(usr_input):
             exit_input(usr_input, menu_func)
-        if not null and len(usr_input) <= 0:
+        elif not null and len(usr_input) == 0:
             valid = False 
-        if length and len(usr_input) > length:
+        elif length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
         else:

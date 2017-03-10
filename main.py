@@ -13,23 +13,23 @@ Contributors: Hong Zhou, Haotian Zhu, Sharidan Barboza
 Due: March 12 5 PM
 """
 
-class Session:
+class Twitter:
 
     def __init__(self):
         """Establishes a connection with cx_Oracle and logs in user"""
         self.conn = self.connect() 
         self.curs = self.conn.cursor()
         self.username = None
-        self.logged_user = None
         self.name = None
         self.tweets = None
         self.s_tweets = None
-        self.s_users = None
         self.current = None
         self.lists = None 
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
+        if not uStat_exists(self.curs):
+            create_uStat(self.curs)
 
         self.start_up()
 
@@ -102,11 +102,10 @@ class Session:
         row = find_user(self.curs, self.username, password)
 
         if row is None:
-            print_string("Username and/or password not valid.\n")
+            print("Username and/or password not valid.\n")
             self.username = None
         else:
             self.name = row[2].rstrip()
-            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)
             self.lists = ListManager(self)	
 
         if self.username is None:
@@ -181,44 +180,16 @@ class Session:
         """Displays main system functionalities menu"""
         while True:          
             print_newline()
-            print_border(thick=True) 
-            if self.current.category() in ["SearchTweet", "SearchUser"]: 
-                title = "SEARCH RESULTS FOR %s" % (self.current.get_searched().upper())
-                print_string(title)
-            else: 
-                title = "HOME"
-                split_title(title, self.logged_user)
-            print_border(thick=True, sign='|') 
 
             self.current.display_results()
             choices = self._main_menu()
             choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
 
-            """
-            Main outline for program
-
-            if option  == 'Select a tweet':
-                self.tweets.choose_tweet()
-            elif option == 'See more tweets':
-                more_tweets()
-            elif option == 'Search tweets':
-                search_tweets()
-            elif option == 'Search users':
-                search_users()
-            elif option == 'Compose tweet':
-                compose_tweet()
-            elif option == 'List followers':
-                list_followers()
-            elif option == 'Manage lists':
-                manage_lists()
-            elif option == 'Logout':
-                self.logout()
-            """
-
             # Currently operating functionalties
             if option == 'Select a result':
                 self.current.choose_result()
+                self.current = self.tweets
             elif option == 'See more results':
                 self.current.more_results()
             elif option == 'Search tweets':
@@ -226,7 +197,7 @@ class Session:
             elif option == 'Search users':
                 self.current = search_users(self) 
             elif option == 'Compose tweet':
-                compose_tweet(self, self.username, menu_func=self.home)
+                compose_tweet(self, menu_func=self.home)
             elif option == 'Manage lists':
                 self.lists.manage_lists() 
             elif option == 'Logout':
@@ -236,8 +207,8 @@ class Session:
 
 def main():
     # Log in/sign up user into database
-    session = Session()
-    conn = session.get_conn()
+    twitter = Twitter()
+    conn = twitter.get_conn()
 
     # Log out of the database system
     session.logout()

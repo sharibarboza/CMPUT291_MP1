@@ -242,8 +242,37 @@ def create_tStat(curs):
         'left outer join mentions m2 on m.term = m2.term '
         'group by t.tid, t.writer, t.tdate, t.text')
 
+def create_uStat(curs):
+    """ Create view uStat to return statistics about a user including
+    usr, follower count, followee count, tweet count, and 3 recent weets
+
+    :param curs: cursor object
+    """
+    curs.execute('create view uStat (usr, flwer_cnt, flwee_cnt, tw_cnt, tid) as '
+        'select t1.usr, t1.ee_cnt, t2.er_cnt, nvl(t3.tw_cnt, 0), nvl(t4.tweet, null) '
+        'from ((((users u left outer join '
+        '(select u1.usr, count(ee.flwee) as ee_cnt '
+        'from (users u1 full outer join follows ee on ee.flwer = u1.usr) '
+        'group by u1.usr) t1 on u.usr = t1.usr) '
+        'left outer join '
+        '(select u2.usr, count(er.flwee) as er_cnt '
+        'from (users u2 full outer join follows er on er.flwee = u2.usr) '
+        'group by u2.usr) t2 on t1.usr = t2.usr) '
+        'left outer join '
+        '(select tw1.writer, count(distinct tw1.tid) as tw_cnt '
+        'from tweets tw1 group by tw1.writer) t3 on t3.writer = t1.usr) '
+        'left outer join '
+        '(select * from (select tw2.writer, tw2.tid as tweet, '
+        'row_number() over (partition by tw2.writer order by tw2.tdate) as rn '
+        'from tweets tw2) where rn <= 3) t4 on t4.writer = t1.usr) '
+        'order by t1.usr')
+
 def tStat_exists(curs):
     curs.execute("select view_name from user_views where view_name='TSTAT'")
+    return curs.fetchone() is not None
+
+def uStat_exists(curs):
+    curs.execute("select view_name from user_views where view_name='USTAT'")
     return curs.fetchone() is not None
 
 def get_rep_cnt(curs, tid):
@@ -309,20 +338,41 @@ def match_tweet(curs, keywords, order):
     terms = remove_hashtags(keywords)
     curs.execute(q, terms)
 
-def match_name(curs, keyword):
+def match_name(curs, keywords):
     """Matches users whose names contain the keyword
 
     :param curs: cursor object
     :param keywords: input string (e.g. 'John', 'John Doe') 
     """
-    curs.execute("select * from users where lower(name) like "
-        "'%%' || :1 || '%%' order by length(name) asc", keyword) 
+    if len(keywords) == 0:
+        return
 
-def match_city(curs, keyword):
-    """Matches users who city contains the keyword
+    q = "select * from users where "
+    name_q = " lower(name) like '%%' || :%d || '%%'"
+
+    q += name_q % (1)
+
+    for i in range(2, len(keywords) + 1):
+        q += " or" + name_q % (i)
+    q += " order by length(trim(name))"
+    curs.execute(q, keywords)
+
+def match_city(curs, keywords):
+    """Matches users whose cities contain the keyword
 
     :param curs: cursor object
-    :param keyword: list of tokenized words (e.g. 'New York')
+    :param keywords: input string (e.g. 'Edmonton', 'New York') 
     """
-    curs.execute("select * from users where lower(city) like "
-        "'%%' || :1 || '%%' order by length(city) asc", keyword)        
+    if len(keywords) == 0:
+        return
+
+    q = "select * from users where "
+    name_q = " lower(city) like '%%' || :%d || '%%' and lower(name) not like '%%' || :%d || '%%'"
+
+    q += name_q % (1, 1)
+
+    for i in range(2, len(keywords) + 1):
+        q += " or" + name_q % (i, i)
+    q += " order by length(trim(city))"
+    curs.execute(q, keywords)   
+
