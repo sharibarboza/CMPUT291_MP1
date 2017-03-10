@@ -380,13 +380,6 @@ class TweetSearch:
         else:
             self.category = "Home"
 
-    def close_cursor(self):
-        self.tweetCurs.close()
-
-    def close_tweets(self):
-        for tweet in self.all_tweets:
-            tweet.close_cursor()
-
     def get_category(self):
         return self.category
 
