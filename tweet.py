@@ -390,6 +390,14 @@ class TweetSearch:
     def get_category(self):
         return self.category
 
+        if len(keywords) > 0:
+            self.category = "TweetSearch"
+        else:
+            self.category = "Home"
+
+    def get_category(self):
+        return self.category
+
     def get_searched(self):
         width = 50
         if len(self.searched) > width:
@@ -433,8 +441,9 @@ class TweetSearch:
 
         :param tweet: Tweet object
         """
+        terms = tweet.get_terms()
         for word in self.keywords:
-            if is_hashtag(word) and word.replace('#', '') in tweet.get_terms():
+            if is_hashtag(word) and word.replace('#', '') in terms:
                return True
             elif not is_hashtag(word) and word in tweet.get_nohash():
                return True 
@@ -456,7 +465,7 @@ class TweetSearch:
             print_string(title)
         else: 
             title = "HOME"
-            split_title(title, self.logged_user)
+            split_title(title, self.session.get_name().upper())
         print_border(thick=True, sign='|') 
 
         for i, tweet in enumerate(self.tweets):
@@ -497,7 +506,6 @@ class TweetSearch:
             new_search = search_tweets(self.session)
             self.session.home(new_search)
         elif option == "Home":
-            self.close_tweets()
             self.session.home()
         elif option == "Logout":
             self.session.logout()
