@@ -299,7 +299,7 @@ def get_user_tweets(curs, user):
 
     :param user: user id
     """
-    curs.execute('select * from tweets where writer=:1', [user])
+    curs.execute('select * from tweets where writer=:1 order by tdate desc', [user])
 
 def get_rep_cnt(curs, tid):
     """ Get the reply count of a specific tweet

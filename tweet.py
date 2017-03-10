@@ -246,15 +246,19 @@ class Tweet:
 
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
+        
+        choices = self.tweet_menu()
+        choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
+        return choices[choice-1]
 
-    def reply(self, menu_func):
+    def reply(self, menu_func=None):
         """Reply to the Tweet
 
         :param menu_func: return point if user decides to cancel reply
         """
         compose_tweet(self.session, menu_func, replyto=self.id)
 
-    def retweet(self, menu_func):
+    def retweet(self, menu_func=None):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
             print_border(thick=False)
@@ -479,27 +483,26 @@ class TweetSearch:
         
         Returns selected option from tweet menu 
         """
-        choice = 0
-        while choice < 3:
-            tweet.display_stats()
-            choices = tweet.tweet_menu()
-            choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
+        option = tweet.display_stats()
 
-            if choice == 1:
-                tweet.reply(tweet.tweet_menu)
-            elif choice == 2:
-                tweet.retweet(tweet.tweet_menu)                    
-       
-        if choice == 3:
+        if option == "Reply":
+            tweet.reply()
+            self.select_result(tweet)
+        elif option == "Retweet":
+            tweet.retweet()         
+            self.select_result(tweet)                
+        elif option == "Go back":
             self.session.home(self) 
-        elif choice == 4:
+        elif option == "Do another search":
             new_search = search_tweets(self.session)
             self.session.home(new_search)
-        elif choice == 5:
+        elif option == "Home":
             self.close_tweets()
             self.session.home()
-        elif choice == 6:
+        elif option == "Logout":
             self.session.logout()
+
+        self.session.home(self)
             
     def choose_result(self):
         """Returns the number of the tweet the user wants to select"""

@@ -171,11 +171,14 @@ class Twitter:
             choices.append("Do another search")
 
         if self.current.get_category() == "Home":
-            choices.append("Search tweets")
-            choices.append("Search users")
-            choices.append("Compose tweet")
-            choices.append("List followers")
-            choices.append("Manage lists")
+            main_list = [
+                "Search tweets", 
+                "Search users", 
+                "Compose tweet",
+                "List followers", 
+                "Manage lists"
+            ]
+            choices.extend(main_list) 
         else:
             choices.append("Home")
         choices.append("Logout")
@@ -215,7 +218,7 @@ class Twitter:
             elif category == 'UserSearch' and option == 'Do another search':
                 self.current = search_users(self)
             elif option == 'Compose tweet':
-                compose_tweet(self, menu_func=self.home)
+                compose_tweet(self)
             elif option == 'List followers':
                 self.current = list_followers(self)
             elif option == 'Manage lists':
@@ -225,8 +228,6 @@ class Twitter:
                 self.home()
             elif option == 'Logout':
                 self.logout()
-
-            print(self.current.get_category())
    
 # ----------------------------------- MAIN --------------------------------------
 

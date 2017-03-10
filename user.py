@@ -114,7 +114,9 @@ class User:
             for tweet in self.tweets:
                 self.display_tweet(tweet) 
 
-        return self.user_menu()
+        choices = self.user_menu()
+        choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
+        return choices[choice-1]
 
     def display_tweet(self, tweet):
         text1, text2 = tweet.split_text(tweet.get_text(), max_width=77)
@@ -134,12 +136,9 @@ class User:
                 insert_follow(self.conn, [self.logged_user, self.id, TODAY])
                 print("You are now following %s." % (self.name))
                 press_enter(self.session)
-            else:
-                self.display_stats()
         else:
             print("You are already following this user.")
             press_enter(self.session)
-            self.display_stats()
 
 
 class UserSearch:
@@ -156,7 +155,11 @@ class UserSearch:
         self.more_exist = False
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
-        self.category = "UserSearch"
+
+        if followers:
+            self.category = "Followers"
+        else:
+            self.category = "UserSearch"
 
     def get_category(self):
         return self.category
@@ -199,14 +202,16 @@ class UserSearch:
         self.index += 5 
 
     def display_results(self):
-        print_border(thick=True) 
-        title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
+        print_border(thick=True)
+        if self.category == "UserSearch": 
+            title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
+        else:
+            title = "YOUR FOLLOWERS"
         print_string(title)
         print_border(thick=True, sign='|') 
 
         for i, user in enumerate(self.users):
             user.display(index=i)
-
             if i == len(self.users) - 1:
                 print_border(thick=False, sign='+')
             else:
@@ -214,21 +219,18 @@ class UserSearch:
 
         if len(self.users) == 0:
             print_string("Sorry, there are no users that match that query.")
+            print_border(thick=False)
 
     def select_result(self, user):
-        choice = 0
-        while choice < 3:
-            choices = user.display_stats()
-            choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
-            option = choices[choice - 1]
-
-            if option == "Follow": 
-                user.follow()
-            elif option == "See more tweets": 
-                user.more_tweets()
-                user.display_stats() 
-
-        if option == "Go back": 
+        option = user.display_stats()
+    
+        if option == "Follow": 
+            user.follow()
+            self.select_result(user)
+        elif option == "See more tweets": 
+            user.more_tweets()
+            self.select_result(user)
+        elif option == "Go back": 
             self.session.home(self)
         elif option == "Do another search": 
             new_search = search_users(self.session)
@@ -237,6 +239,8 @@ class UserSearch:
             self.session.home()
         elif option == "Logout": 
             self.session.logout()
+
+        self.session.home(self)
 
     def choose_result(self):
         prompt = "Enter the result number to select: "
