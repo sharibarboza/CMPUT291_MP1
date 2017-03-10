@@ -57,7 +57,7 @@ def get_users_l(username, curs, con):
 #  input user name
 #  output lists contains user
 #############################################
-def get_lhas_user(username,curs):
+def get_lhas_user(session, username, curs):
     curs.execute("select lists.owner, users.name, lists.lname from lists,includes,users where  users.usr = lists.owner and lists.lname=includes.lname and includes.member =:1",[username])
     rows = curs.fetchall()
     cols = curs.description
@@ -79,7 +79,7 @@ def get_lhas_user(username,curs):
         print_string(row_str, length=BORD_LEN)
         print_border(BORD_LEN, False)
 
-    press_enter()
+    press_enter(session)
     return
 
 #############################################
@@ -98,7 +98,7 @@ def create_l(session, username, curs, con, manage_lists) :
         curs.execute('insert into lists values(:1,:2)',[lname,username])
         con.commit()
         print("List %s created." % (lname))
-        press_enter()
+        press_enter(session)
     return
 
 
@@ -109,14 +109,14 @@ def add_lmember(session, username, curs, con, manage_lists):
     lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
-        press_enter()
+        press_enter(session)
         add_lmember(session, username, curs, con)
     else:
         prompt = "Enter the member you want to add: "
         member = validate_num(prompt, session, menu_func=manage_lists)
         if (member_exists(curs,lname,member) or not user_exists(curs,member)):
             print("The user already exists in this list or the user does not exist!")
-            press_enter()
+            press_enter(session)
         elif(member==username):
             print("You cannot put yourself in your list.")
         else:
@@ -125,7 +125,7 @@ def add_lmember(session, username, curs, con, manage_lists):
                 curs.execute('insert into includes values(:1,:2)',[lname,member])
                 con.commit()
                 print("Added %s to list %s." % (member, lname))
-                press_enter()
+                press_enter(session)
     return
 
 
@@ -136,7 +136,7 @@ def delete_lmember(session, username, curs, con, manage_lists):
     lname = validate_str(prompt, session, menu_func=manage_lists, length=12)
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
-        press_enter()
+        press_enter(session)
         delete_lmember(session, username, curs, con)
     else:
         get_members(curs, username, lname)
@@ -151,14 +151,14 @@ def delete_lmember(session, username, curs, con, manage_lists):
         member = validate_num(prompt, session, menu_func=manage_lists)
         if (not member_exists(curs,lname,member) or not user_exists(curs,member)):
             print("The user does not exist in this list or the user does not exist! ")
-            press_enter()
+            press_enter(session)
         else:
             prompt = "You want to delete member "+str(member)+"? y/n: "
             if answer_check(prompt) :
                 curs.execute("delete from includes where lname like '%%' || :1 ||'%%' and member=:2",[lname,member])
                 con.commit()
                 print("%s deleted from %s." % (member, lname))
-                press_enter()
+                press_enter(session)
     return
 
 def list_members(curs, lname, rows):

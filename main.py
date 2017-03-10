@@ -4,7 +4,7 @@ from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
-from user import UserSearch, search_users 
+from user import UserSearch, search_users, list_followers 
 from mlist import ListManager 
 
 """
@@ -47,7 +47,7 @@ class Twitter:
         return self.conn
 
     def get_curs(self):
-        """Return the cursor"""
+        """Returns the cursor"""
         return self.curs
 
     def get_username(self):
@@ -132,7 +132,7 @@ class Twitter:
             print("Welcome %s! Your new user id is %d." % (name, self.username))
             data = [self.username, password, name, email, city, timezone]
             insert_user(self.conn, data)
-            press_enter()
+            press_enter(self)
         else:
             self.start_up()
 
@@ -158,14 +158,7 @@ class Twitter:
     
         :param t: TweetSearch object (can be self.tweets or self.s_tweets)
         """
-        choices = [
-            "Search tweets", 
-            "Search users", 
-            "Compose tweet", 
-            "List followers", 
-            "Manage lists",
-            "Logout"
-        ]
+        choices = []
 
         # Allow tweet selection if user has any tweets
         if self.current.results_exist():
@@ -173,11 +166,30 @@ class Twitter:
     
             if self.current.more_results_exist():
                 choices.insert(1, "See more results")
-        display_selections(choices, "Main Menu", no_border=True)
+
+        if self.current.get_category() in ["UserSearch", "TweetSearch"]:
+            choices.append("Do another search")
+
+        if self.current.get_category() == "Home":
+            choices.append("Search tweets")
+            choices.append("Search users")
+            choices.append("Compose tweet")
+            choices.append("List followers")
+            choices.append("Manage lists")
+        else:
+            choices.append("Home")
+        choices.append("Logout")
+
+        display_selections(choices, no_border=True)
         return choices
 
-    def home(self):
+    def home(self, current=None):
         """Displays main system functionalities menu"""
+        if current is None:
+            self.current = self.tweets
+        else:
+            self.current = current
+
         while True:          
             print_newline()
 
@@ -185,6 +197,8 @@ class Twitter:
             choices = self._main_menu()
             choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
+
+            category = self.current.get_category()
 
             # Currently operating functionalties
             if option == 'Select a result':
@@ -194,14 +208,25 @@ class Twitter:
                 self.current.more_results()
             elif option == 'Search tweets':
                 self.current = search_tweets(self)
+            elif category == 'TweetSearch' and option == 'Do another search':
+                self.current = search_tweets(self)
             elif option == 'Search users':
                 self.current = search_users(self) 
+            elif category == 'UserSearch' and option == 'Do another search':
+                self.current = search_users(self)
             elif option == 'Compose tweet':
                 compose_tweet(self, menu_func=self.home)
+            elif option == 'List followers':
+                self.current = list_followers(self)
             elif option == 'Manage lists':
                 self.lists.manage_lists() 
+            elif option == "Home":
+                self.current = self.tweets
+                self.home()
             elif option == 'Logout':
                 self.logout()
+
+            print(self.current.get_category())
    
 # ----------------------------------- MAIN --------------------------------------
 

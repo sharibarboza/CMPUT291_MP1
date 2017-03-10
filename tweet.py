@@ -21,7 +21,7 @@ def compose_tweet(session, menu_func=None, replyto=None):
 
     print("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
     print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
-    press_enter()
+    press_enter(session)
 
 def create_tweet(session, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
@@ -44,7 +44,7 @@ def create_tweet(session, menu_func, replyto):
     rt_user = None
     data = [tid, writer, date, text, replyto, rt_user]
     new_tweet = Tweet(session, data)
-    new_tweet.display()
+    new_tweet.display(result="Tweet")
     print_border(thick=False)
     new_tweet.set_terms()
 
@@ -93,7 +93,7 @@ class Tweet:
         """
         self.session = session
         self.conn = session.get_conn() 
-        self.curs = self.conn.cursor()
+        self.curs = session.get_curs() 
         self.user = session.get_username() 
 
         self.id = data[0]
@@ -137,18 +137,22 @@ class Tweet:
         """Return the tweet id"""
         return self.id
 
+    def get_text(self):
+        """Get the tweet text"""
+        return self.text
+
     def tweet_menu(self):
         """Displays options to reply or retweet a tweet after it has 
         been selected
         Returns the selected option from the tweet menu
         """
-        choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
+        choices = ["Reply", "Retweet", "Go back", "Do another search", "Home", "Logout"]
         print_border(thick=True)
         display_selections(choices)
 
         return choices
 
-    def display(self, index=None, rt_user=None):
+    def display(self, index=None, rt_user=None, result="Result"):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
       
@@ -156,13 +160,12 @@ class Tweet:
         :param user (optional): user id of the user who retweeted this tweet
         """
         if index is not None: 
-            tweet_index = "Result %d" % (index + 1)
+            tweet_index = "%s %d" % (result, index + 1)
         else:
-            tweet_index = "Result %d" % (self.id)
+            tweet_index = "%s %d" % (result, self.id)
 
         col1_width = len(tweet_index) + 1
         col2_width = BORDER_LEN - col1_width - 3 
-
         date_line = "%s" % (self.date_str)
         date_user = "%d (%s) - %s" % (self.writer, self.writer_name, date_line)
         blank = " " * col1_width
@@ -198,13 +201,14 @@ class Tweet:
     def split_text(self, text, max_width=65):
         """Splits up tweets text into 2 separate lines if too long"""
         space_index = -1
+        text = text + " "
         text1 = text
         text2 = ""
 
         if len(text) > max_width:
             space_index = text.find(' ', max_width-5)
         
-        if space_index > max_width:
+        if space_index >= max_width:
             space_index = 0
 
             i = max_width
@@ -215,7 +219,7 @@ class Tweet:
         if space_index > 0:    
             text1 = text[:space_index]
             text2 = text[space_index + 1:]
-       
+
         return (text1, text2)
 
     def display_stats(self):
@@ -271,7 +275,7 @@ class Tweet:
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
 
-            press_enter()
+            press_enter(self.session)
 
     def get_values(self):
         """Returns a list of tid, writer, tdate, text, and replyto"""
@@ -357,7 +361,7 @@ class TweetSearch:
         self.session = session
         self.conn = session.get_conn() 
         self.user = session.get_username() 
-        self.tweetCurs = self.conn.cursor()
+        self.tweetCurs = self.session.get_curs() 
         self.all_tweets = []
         self.tweets = []
         self.more_exist = False
@@ -368,9 +372,19 @@ class TweetSearch:
         self.logged_user = "Logged in: %d (%s)" % (self.user, self.session.get_name())
 
         if len(keywords) > 0:
-            self.category = "SearchTweet"
+            self.category = "TweetSearch"
         else:
-            self.category = "Tweet"
+            self.category = "Home"
+
+    def close_cursor(self):
+        self.tweetCurs.close()
+
+    def close_tweets(self):
+        for tweet in self.all_tweets:
+            tweet.close_cursor()
+
+    def get_category(self):
+        return self.category
 
     def get_searched(self):
         width = 50
@@ -433,7 +447,7 @@ class TweetSearch:
     def display_results(self):
         """Display resulting tweets 5 at a time ordered by date"""
         print_border(thick=True) 
-        if self.category == "SearchTweet": 
+        if self.category == "TweetSearch": 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
             print_string(title)
         else: 
@@ -466,7 +480,7 @@ class TweetSearch:
         Returns selected option from tweet menu 
         """
         choice = 0
-        while choice < 4:
+        while choice < 3:
             tweet.display_stats()
             choices = tweet.tweet_menu()
             choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
@@ -475,17 +489,26 @@ class TweetSearch:
                 tweet.reply(tweet.tweet_menu)
             elif choice == 2:
                 tweet.retweet(tweet.tweet_menu)                    
-            elif choice == 3:
-                self.display_results()
-                self.choose_result()
-
-        if choice == 5:
+       
+        if choice == 3:
+            self.session.home(self) 
+        elif choice == 4:
+            new_search = search_tweets(self.session)
+            self.session.home(new_search)
+        elif choice == 5:
+            self.close_tweets()
+            self.session.home()
+        elif choice == 6:
             self.session.logout()
             
     def choose_result(self):
         """Returns the number of the tweet the user wants to select"""
         prompt = "Enter the result number to select: "
-        choice = validate_num(prompt, self.session, self.session.home, size=len(self.tweets)) - 1
+        choice = validate_num(prompt, self.session, size=len(self.tweets))
+        if check_quit(choice):
+            self.session.home(self)
+        else:
+            choice -= 1
 
         tweet = self.tweets[choice]
         self.select_result(tweet)

@@ -99,7 +99,10 @@ def check_quit(user_input):
 
     :param: user_input: input from the user
     """
-    return user_input.lower() in ['quit', 'q', 'exit']
+    try: 
+        return user_input.lower() in ['quit', 'q', 'exit']
+    except AttributeError: 
+        return False
 
 def exit_input(choice, menu_func):
     """Determines what to return when a user quits an input prompt
@@ -112,12 +115,15 @@ def exit_input(choice, menu_func):
     else:
         return menu_func()
 
-def press_enter(prompt="Press Enter to continue."):
+def press_enter(session, prompt="Press Enter to continue."):
     """Requires user to press enter key before continuing
 
     :param: string message
     """
-    input(prompt)
+    try:
+        input(prompt)
+    except KeyboardInterrupt:
+        session.exit()
 
 def validate_str(prompt, session, menu_func=None, length=None, null=True):
     """Used for when user needs to input words
@@ -139,7 +145,7 @@ def validate_str(prompt, session, menu_func=None, length=None, null=True):
         except KeyboardInterrupt:
             session.exit() 
         if check_quit(usr_input):
-            exit_input(usr_input, menu_func)
+            return exit_input(usr_input, menu_func)
         elif not null and len(usr_input) == 0:
             valid = False 
         elif length and len(usr_input) > length:
@@ -171,7 +177,7 @@ def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
             choice = input(prompt)
 
             if check_quit(choice):
-                exit_input(choice, menu_func) 
+                return exit_input(choice, menu_func) 
             if num_type == 'int':
                 choice = int(choice)
             else:

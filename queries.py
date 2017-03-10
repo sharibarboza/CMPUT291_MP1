@@ -12,6 +12,7 @@ def insert_user(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into users(usr,pwd,name,email,city,timezone)"
     	"values(:1,:2,:3,:4,:5,:6)", data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -25,6 +26,7 @@ def insert_follow(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into follows(flwer,flwee,start_date)"
     	"values(:1,:2,:3)", data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -38,6 +40,7 @@ def insert_tweet(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into tweets(tid,writer,tdate,text,replyto)"
 	    "values(:1,:2,:3,:4,:5)", data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -50,6 +53,7 @@ def insert_hashtag(conn, term):
     """
     cursInsert = conn.cursor()
     cursInsert.execute("insert into hashtags(term) values(:1)", [term.lower()])
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -63,6 +67,7 @@ def insert_mention(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into mentions(tid,term) values(:1,:2)",
         data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -76,6 +81,7 @@ def insert_retweet(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into retweets(usr,tid,rdate) values(:1,:2,:3)", 
         data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -89,6 +95,7 @@ def insert_list(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into lists(lname,owner) values(:1,:2)",
         data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -102,6 +109,7 @@ def insert_include(conn, data_list):
     cursInsert = conn.cursor()
     cursInsert.execute("insert into includes(lname,member) values(:1,:2)",
         data_list)
+    cursInsert.close()
     conn.commit()
 
     return cursInsert
@@ -198,6 +206,16 @@ def follows_tweets(curs, user):
         'on t.tid = t2.tid or (t.writer = t2.flwee) where t2.flwer =:1 order by t.tdate desc', 
         [user])
 
+def get_followers(curs, user):
+    """Gets all the followers of a specific user
+
+    :param curs: cursor object
+    :param user: user id
+    """
+    curs.execute("select u.usr, u.pwd, u.name, u.email, u.city, u.timezone from "
+        "users u, follows f where u.usr = f.flwer and f.flwee=:1 "
+        "order by f.start_date desc", [user])
+
 def get_name(curs, user):
     """Gets a specific user's name
     
@@ -248,9 +266,9 @@ def create_uStat(curs):
 
     :param curs: cursor object
     """
-    curs.execute('create view uStat (usr, flwer_cnt, flwee_cnt, tw_cnt, tid) as '
-        'select t1.usr, t1.ee_cnt, t2.er_cnt, nvl(t3.tw_cnt, 0), nvl(t4.tweet, null) '
-        'from ((((users u left outer join '
+    curs.execute('create view uStat (usr, flwer_cnt, flwee_cnt, tw_cnt) as '
+        'select u.usr, t1.ee_cnt, t2.er_cnt, nvl(t3.tw_cnt, 0) '
+        'from (((users u left outer join '
         '(select u1.usr, count(ee.flwee) as ee_cnt '
         'from (users u1 full outer join follows ee on ee.flwer = u1.usr) '
         'group by u1.usr) t1 on u.usr = t1.usr) '
@@ -261,10 +279,6 @@ def create_uStat(curs):
         'left outer join '
         '(select tw1.writer, count(distinct tw1.tid) as tw_cnt '
         'from tweets tw1 group by tw1.writer) t3 on t3.writer = t1.usr) '
-        'left outer join '
-        '(select * from (select tw2.writer, tw2.tid as tweet, '
-        'row_number() over (partition by tw2.writer order by tw2.tdate) as rn '
-        'from tweets tw2) where rn <= 3) t4 on t4.writer = t1.usr) '
         'order by t1.usr')
 
 def tStat_exists(curs):
@@ -274,6 +288,18 @@ def tStat_exists(curs):
 def uStat_exists(curs):
     curs.execute("select view_name from user_views where view_name='USTAT'")
     return curs.fetchone() is not None
+
+def get_user_stats(curs, user):
+    """Get user statistics about a specific user"""
+    curs.execute("select * from uStat where usr=:1", [user])
+    return curs.fetchmany(3)
+
+def get_user_tweets(curs, user):
+    """Get all the tweets of a specific user
+
+    :param user: user id
+    """
+    curs.execute('select * from tweets where writer=:1', [user])
 
 def get_rep_cnt(curs, tid):
     """ Get the reply count of a specific tweet
@@ -366,13 +392,18 @@ def match_city(curs, keywords):
     if len(keywords) == 0:
         return
 
+    temp = []
+    for word in keywords:
+        temp.append(word)
+        temp.append(word)
+
     q = "select * from users where "
     name_q = " lower(city) like '%%' || :%d || '%%' and lower(name) not like '%%' || :%d || '%%'"
 
-    q += name_q % (1, 1)
+    q += name_q % (1, 2)
 
     for i in range(2, len(keywords) + 1):
-        q += " or" + name_q % (i, i)
+        q += " or" + name_q % (i, i + 1)
     q += " order by length(trim(city))"
-    curs.execute(q, keywords)   
+    curs.execute(q, temp)   
 

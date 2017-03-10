@@ -23,7 +23,7 @@ class ListManager:
         self.session = session
         self.username = session.get_username()
         self.con = session.get_conn()
-        self.curs = session.get_curs()
+        self.curs = self.con.cursor()
 
     def manage_lists(self):
         while True:
@@ -42,7 +42,7 @@ class ListManager:
             if num_choose == 1:
                 get_users_l(self.username, self.curs, self.con)
             elif num_choose == 2:
-                get_lhas_user(self.username, self.curs)
+                get_lhas_user(self.session, self.username, self.curs)
             elif num_choose == 3:
                 create_l(self.session, self.username, self.curs, self.con, self.manage_lists)
             elif num_choose == 4:
@@ -50,6 +50,7 @@ class ListManager:
             elif num_choose == 5:
                 delete_lmember(self.session, self.username, self.curs, self.con, self.manage_lists)
             elif num_choose == 6:
+                self.curs.close()
                 self.session.home()
             else:
                 self.session.logout()
