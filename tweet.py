@@ -1,7 +1,7 @@
 from utils import *
 from queries import * 
 
-def compose_tweet(session, user, menu_func=None, replyto=None):
+def compose_tweet(session, menu_func=None, replyto=None):
     """ Generates a new tweet and inserts it into the database
     Also inserts any hashtags into hashtags and mentions tables
 
@@ -9,7 +9,7 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
     :param user: logged in user's id
     :param replyto (optional): the user id of who the tweet is replying to
     """
-    new_tweet = create_tweet(session, user, menu_func, replyto)
+    new_tweet = create_tweet(session, menu_func, replyto)
  
     confirm = validate_yn("Confirm tweet? y/n: ", session)
     if confirm in ["n", "no"]:
@@ -21,9 +21,9 @@ def compose_tweet(session, user, menu_func=None, replyto=None):
 
     print("Tweet %d created - %s." % (new_tweet.tid(), new_tweet.tdate()))
     print("Hashtags mentioned: %s" % (new_tweet.get_terms()))
-    press_enter()
+    press_enter(session)
 
-def create_tweet(session, user, menu_func, replyto):
+def create_tweet(session, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
 
     :param session: Session object
@@ -31,24 +31,25 @@ def create_tweet(session, user, menu_func, replyto):
     :param menu_func: function to return to if user quits
     :param replyto: id of user to replyto or None
     """
-    text = validate_str("Enter tweet: ", session, menu_func=menu_func)
+    text = validate_str("Enter tweet: ", session, menu_func=menu_func, null=False)
     if len(text) > 80:
         print("Tweet is too long. Must be 80 characters or less.")
-        return create_tweet(session, user, menu_func, replyto)
+        return create_tweet(session, menu_func, replyto)
   
     print_border(thick=False)
-    writer = user
+    writer = session.get_username()
     tid = generate_tid(session.get_conn())
     date = TODAY
     replyto = replyto
     rt_user = None
     data = [tid, writer, date, text, replyto, rt_user]
-    new_tweet = Tweet(session, user, data)
-    new_tweet.display()
+    new_tweet = Tweet(session, data)
+    new_tweet.display(result="Tweet")
+    print_border(thick=False)
     new_tweet.set_terms()
 
     if not new_tweet.valid_terms():
-        return create_tweet(session, user, menu_func, replyto)
+        return create_tweet(session, menu_func, replyto)
     
     return new_tweet
 
@@ -69,21 +70,21 @@ def generate_tid(conn):
     return new_tid
 
 
-def search_tweets(session, user):
+def search_tweets(session):
     """Match tweets to user's keywords
 
     :param session: session connection
     :param user: logged in user id
     """
-    search_input = validate_str("Enter keywords: ", session, session.home)
-    s_tweets = TweetSearch(session, user, search_input)
+    search_input = validate_str("Enter keywords for tweet search: ", session, session.home, null=False)
+    s_tweets = TweetSearch(session, search_input)
     s_tweets.get_search_tweets()
     return s_tweets 
 
 
 class Tweet:
 
-    def __init__(self, session, user, data):
+    def __init__(self, session, data):
         """ Represents a single tweet, helps to display tweets to console
         
         param conn: database session connection 
@@ -92,8 +93,8 @@ class Tweet:
         """
         self.session = session
         self.conn = session.get_conn() 
-        self.curs = self.conn.cursor()
-        self.user = user
+        self.curs = session.get_curs() 
+        self.user = session.get_username() 
 
         self.id = data[0]
         self.writer = data[1]
@@ -115,7 +116,10 @@ class Tweet:
         self.rep_cnt = get_rep_cnt(self.curs, self.id)
         self.ret_cnt = get_ret_cnt(self.curs, self.id)
         self.writer_name = get_name(self.curs, self.writer)
-        self.terms = []
+        
+        self.terms = get_hashtags(self.curs, self.id)
+        if self.terms is None: 
+            self.terms = []
 
     def author(self):
         """Return the tweet writer"""
@@ -133,7 +137,22 @@ class Tweet:
         """Return the tweet id"""
         return self.id
 
-    def display(self, index=None, rt_user=None, single=False):
+    def get_text(self):
+        """Get the tweet text"""
+        return self.text
+
+    def tweet_menu(self):
+        """Displays options to reply or retweet a tweet after it has 
+        been selected
+        Returns the selected option from the tweet menu
+        """
+        choices = ["Reply", "Retweet", "Go back", "Do another search", "Home", "Logout"]
+        print_border(thick=True)
+        display_selections(choices)
+
+        return choices
+
+    def display(self, index=None, rt_user=None, result="Result"):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
       
@@ -141,13 +160,12 @@ class Tweet:
         :param user (optional): user id of the user who retweeted this tweet
         """
         if index is not None: 
-            tweet_index = "Tweet %d" % (index + 1)
+            tweet_index = "%s %d" % (result, index + 1)
         else:
-            tweet_index = "Tweet %d" % (self.id)
+            tweet_index = "%s %d" % (result, self.id)
 
         col1_width = len(tweet_index) + 1
         col2_width = BORDER_LEN - col1_width - 3 
-
         date_line = "%s" % (self.date_str)
         date_user = "%d (%s) - %s" % (self.writer, self.writer_name, date_line)
         blank = " " * col1_width
@@ -180,33 +198,28 @@ class Tweet:
         if line4_2[2] != " ":
             print_string(blank + line4_2)
 
-        if single:
-            print_border(thick=False)
-        else:
-            print_border(thick=False, sign='|')
-
     def split_text(self, text, max_width=65):
         """Splits up tweets text into 2 separate lines if too long"""
         space_index = -1
+        text = text + " "
         text1 = text
         text2 = ""
 
         if len(text) > max_width:
             space_index = text.find(' ', max_width-5)
         
-        if space_index > max_width:
+        if space_index >= max_width:
             space_index = 0
 
             i = max_width
-            while i > 0:
-                if text[i] == ' ':
-                    space_index = i
+            while text[i] != ' ': 
                 i -= 1
+            space_index = i
         
         if space_index > 0:    
             text1 = text[:space_index]
             text2 = text[space_index + 1:]
-       
+
         return (text1, text2)
 
     def display_stats(self):
@@ -233,15 +246,19 @@ class Tweet:
 
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
+        
+        choices = self.tweet_menu()
+        choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
+        return choices[choice-1]
 
-    def reply(self, menu_func):
+    def reply(self, menu_func=None):
         """Reply to the Tweet
 
         :param menu_func: return point if user decides to cancel reply
         """
-        compose_tweet(self.session, self.user, menu_func, replyto=self.id)
+        compose_tweet(self.session, menu_func, replyto=self.id)
 
-    def retweet(self, menu_func):
+    def retweet(self, menu_func=None):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
             print_border(thick=False)
@@ -250,7 +267,9 @@ class Tweet:
             return None if menu_func is None else menu_func()
             
         print_border(thick=False)
-        self.display(rt_user=self.user, single=True)
+        self.display(rt_user=self.user)
+        print_border(thick=False)
+
         confirm = validate_yn("Confirm retweet? y/n: ", self.session)
         if confirm in ["n", "no"]:
             print("Retweet cancelled.")
@@ -260,7 +279,7 @@ class Tweet:
             data_list = [self.user, self.id, TODAY]
             insert_retweet(self.conn, data_list)
 
-            press_enter()
+            press_enter(self.session)
 
     def get_values(self):
         """Returns a list of tid, writer, tdate, text, and replyto"""
@@ -291,11 +310,9 @@ class Tweet:
     def insert_terms(self):
         """Inserts all hashtag terms into the hashtags table"""
         for term in self.terms:
-            # Insert into hashtags table
             if not hashtag_exists(self.curs, term):
                 insert_hashtag(self.conn, term)      
  
-            # Insert into mentions table
             if not mention_exists(self.curs, self.id, term):
                 insert_mention(self.conn, [self.id, term])
  
@@ -309,8 +326,8 @@ class Tweet:
         return True
 
     def get_nohash(self):
-        """Return tweet tex without the hashtags"""
-        text_str = self.text.lower() 
+        """Return tweet text without the hashtags"""
+        text_str = self.text.lower()
         for word in self.terms:
             word = '#' + word
             text_str = text_str.replace(word, '')
@@ -338,7 +355,7 @@ class Tweet:
 
 class TweetSearch:
 
-    def __init__(self, session, user, keywords=''):
+    def __init__(self, session, keywords=''):
         """Can be used for getting tweets of users being 
         followed or searching for specific tweets based on keywords
          
@@ -347,8 +364,8 @@ class TweetSearch:
         """ 
         self.session = session
         self.conn = session.get_conn() 
-        self.user = user
-        self.tweetCurs = self.conn.cursor()
+        self.user = session.get_username() 
+        self.tweetCurs = self.session.get_curs() 
         self.all_tweets = []
         self.tweets = []
         self.more_exist = False
@@ -356,9 +373,24 @@ class TweetSearch:
         self.rows = None
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
+        self.logged_user = "Logged in: %d (%s)" % (self.user, self.session.get_name())
+
+        if len(keywords) > 0:
+            self.category = "TweetSearch"
+        else:
+            self.category = "Home"
+
+    def close_cursor(self):
+        self.tweetCurs.close()
+
+    def close_tweets(self):
+        for tweet in self.all_tweets:
+            tweet.close_cursor()
+
+    def get_category(self):
+        return self.category
 
     def get_searched(self):
-        """Returns the user's search input"""
         width = 50
         if len(self.searched) > width:
             return self.searched[:width] + "..."
@@ -368,27 +400,27 @@ class TweetSearch:
     def get_search_tweets(self):
         """Find tweets matching keywords"""
         match_tweet(self.tweetCurs, self.keywords, 'tdate')
-        self.add_filtered_tweets()
-        self.more_tweets()
+        self.add_filtered_results()
+        self.more_results()
 
     def get_user_tweets(self):
         """Find tweets/retweets from users who are being followed"""
         follows_tweets(self.tweetCurs, self.user)
-        self.add_tweets()
-        self.more_tweets()
+        self.add_results()
+        self.more_results()
 
-    def add_tweets(self):
+    def add_results(self):
         """Adds tweets from the query resuls into the all_tweets list"""
         for row in self.tweetCurs.fetchall():
-            tweet = Tweet(self.session, self.user, data=row)
+            tweet = Tweet(self.session, row)
             self.all_tweets.append(tweet)
 
-    def add_filtered_tweets(self):
+    def add_filtered_results(self):
         """Remove tweets from all_tweets list if the tweet does not match
         a keyword
         """
         for row in self.tweetCurs.fetchall():
-            tweet = Tweet(self.session, self.user, data=row)
+            tweet = Tweet(self.session, data=row)
             valid_tweet = True
             if len(self.keywords) > 0:
                 valid_tweet = self.validate_tweet(tweet)
@@ -401,7 +433,6 @@ class TweetSearch:
 
         :param tweet: Tweet object
         """
-        tweet.set_terms()
         for word in self.keywords:
             if is_hashtag(word) and word.replace('#', '') in tweet.get_terms():
                return True
@@ -409,7 +440,7 @@ class TweetSearch:
                return True 
         return False 
 
-    def more_tweets(self):
+    def more_results(self):
         """Gets the next 5 tweets from users who are being followed"""
         assert(self.tweetCurs is not None), 'Unable to select more tweets'
 
@@ -417,65 +448,78 @@ class TweetSearch:
         self.more_exist = len(self.all_tweets) - self.tweet_index > 0
         self.tweet_index += 5
   
-    def display_tweets(self):
+    def display_results(self):
         """Display resulting tweets 5 at a time ordered by date"""
+        print_border(thick=True) 
+        if self.category == "TweetSearch": 
+            title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
+            print_string(title)
+        else: 
+            title = "HOME"
+            split_title(title, self.logged_user)
+        print_border(thick=True, sign='|') 
+
         for i, tweet in enumerate(self.tweets):
             rt_user = tweet.retweeter()
             if rt_user and tweet.author() != rt_user: 
                 tweet.display(index=i, rt_user=rt_user)
             else:
-                tweet.display(index=i) 
+                tweet.display(index=i)
+
+            if i == len(self.tweets) - 1:
+                print_border(thick=False, sign='+')
+            else:
+                print_border(thick=False, sign='|')
 
         if len(self.tweets) == 0:
-            print_string("You have no tweets yet.")
-            print_border(thick=False)
+            if len(self.keywords) > 0:
+                print_string("Sorry, there are no tweets that match that query.")
+            else:
+                print_string("You have no tweets yet.")
+            print_border(thick=False, sign='|')
 
-    def tweet_menu(self):
-        """Displays options to reply or retweet a tweet after it has 
-        been selected
-        Returns the selected option from the tweet menu
-        """
-        choices = ["Reply", "Retweet", "Select another tweet", "Home", "Logout"]
-        print_border(thick=True)
-        display_selections(choices)
-
-        return choices
-
-    def select_tweet(self, tweet):
+    def select_result(self, tweet):
         """Prompt user to choose one of the displayed tweets
         
         Returns selected option from tweet menu 
         """
-        choice = 0
-        while choice < 4:
-            choices = self.tweet_menu()
-            choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
+        option = tweet.display_stats()
 
-            if choice == 1:
-                tweet.reply(self.tweet_menu)
-            elif choice == 2:
-                tweet.retweet(self.tweet_menu)                    
-            elif choice == 3:
-                choice = self.choose_tweet()
-
-        if choice == 4:
+        if option == "Reply":
+            tweet.reply()
+            self.select_result(tweet)
+        elif option == "Retweet":
+            tweet.retweet()         
+            self.select_result(tweet)                
+        elif option == "Go back":
+            self.session.home(self) 
+        elif option == "Do another search":
+            new_search = search_tweets(self.session)
+            self.session.home(new_search)
+        elif option == "Home":
+            self.close_tweets()
             self.session.home()
-        else:
+        elif option == "Logout":
             self.session.logout()
+
+        self.session.home(self)
             
-    def choose_tweet(self):
+    def choose_result(self):
         """Returns the number of the tweet the user wants to select"""
-        prompt = "Enter the tweet number to select: "
-        choice = validate_num(prompt, self.session, self.session.home, size=len(self.tweets)) - 1
+        prompt = "Enter the result number to select: "
+        choice = validate_num(prompt, self.session, size=len(self.tweets))
+        if check_quit(choice):
+            self.session.home(self)
+        else:
+            choice -= 1
 
         tweet = self.tweets[choice]
-        tweet.display_stats()
-        self.select_tweet(tweet)
+        self.select_result(tweet)
 
-    def tweets_exist(self):
+    def results_exist(self):
         """Return true if user has tweets to display"""
         return True if len(self.tweets) > 0 else False
 
-    def more_tweets_exist(self):
+    def more_results_exist(self):
         """Return true if more tweets can be displayed"""
         return self.more_exist

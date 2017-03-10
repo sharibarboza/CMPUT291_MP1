@@ -4,6 +4,7 @@ from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
+from user import UserSearch, search_users, list_followers 
 from mlist import ListManager 
 
 """
@@ -12,21 +13,23 @@ Contributors: Hong Zhou, Haotian Zhu, Sharidan Barboza
 Due: March 12 5 PM
 """
 
-class Session:
+class Twitter:
 
     def __init__(self):
         """Establishes a connection with cx_Oracle and logs in user"""
         self.conn = self.connect() 
         self.curs = self.conn.cursor()
         self.username = None
-        self.logged_user = None
         self.name = None
         self.tweets = None
         self.s_tweets = None
+        self.current = None
         self.lists = None 
 
         if not tStat_exists(self.curs):
             create_tStat(self.curs)
+        if not uStat_exists(self.curs):
+            create_uStat(self.curs)
 
         self.start_up()
 
@@ -44,7 +47,7 @@ class Session:
         return self.conn
 
     def get_curs(self):
-        """Return the cursor"""
+        """Returns the cursor"""
         return self.curs
 
     def get_username(self):
@@ -99,11 +102,10 @@ class Session:
         row = find_user(self.curs, self.username, password)
 
         if row is None:
-            print_string("Username and/or password not valid.\n")
+            print("Username and/or password not valid.\n")
             self.username = None
         else:
             self.name = row[2].rstrip()
-            self.logged_user = "Logged in: %d (%s)" % (self.username, self.name)
             self.lists = ListManager(self)	
 
         if self.username is None:
@@ -130,7 +132,7 @@ class Session:
             print("Welcome %s! Your new user id is %d." % (name, self.username))
             data = [self.username, password, name, email, city, timezone]
             insert_user(self.conn, data)
-            press_enter()
+            press_enter(self)
         else:
             self.start_up()
 
@@ -146,88 +148,84 @@ class Session:
 
     def get_home_tweets(self):
         """Gets the tweets of users being followed by the user"""
-        self.tweets = TweetSearch(self, self.username)
+        self.tweets = TweetSearch(self)
+        self.current = self.tweets
         self.tweets.get_user_tweets()
         self.home()
 
-    def _main_menu(self, t):
+    def _main_menu(self):
         """Displays the main functionality menu
     
         :param t: TweetSearch object (can be self.tweets or self.s_tweets)
         """
-        choices = [
-            "Search tweets", 
-            "Search users", 
-            "Compose tweet", 
-            "List followers", 
-            "Manage lists",
-            "Logout"
-        ]
+        choices = []
 
         # Allow tweet selection if user has any tweets
-        if t.tweets_exist():
-            choices.insert(0, "Select a tweet")
+        if self.current.results_exist():
+            choices.insert(0, "Select a result")
     
-            if t.more_tweets_exist():
-                choices.insert(1, "See more tweets")
-        display_selections(choices, "Main Menu", no_border=True)
+            if self.current.more_results_exist():
+                choices.insert(1, "See more results")
+
+        if self.current.get_category() in ["UserSearch", "TweetSearch"]:
+            choices.append("Do another search")
+
+        if self.current.get_category() == "Home":
+            main_list = [
+                "Search tweets", 
+                "Search users", 
+                "Compose tweet",
+                "List followers", 
+                "Manage lists"
+            ]
+            choices.extend(main_list) 
+        else:
+            choices.append("Home")
+        choices.append("Logout")
+
+        display_selections(choices, no_border=True)
         return choices
 
-    def home(self):
+    def home(self, current=None):
         """Displays main system functionalities menu"""
-        while True:          
-            t = self.s_tweets if self.s_tweets else self.tweets
-           
-            print_newline()
-            print_border(thick=True) 
-            if self.s_tweets:
-                title = "SEARCH RESULTS FOR %s" % (self.s_tweets.get_searched().upper())
-                print_string(title)
-            else: 
-                title = "HOME"
-                split_title(title, self.logged_user)
-            print_border(thick=True, sign='|') 
+        if current is None:
+            self.current = self.tweets
+        else:
+            self.current = current
 
-            t.display_tweets()
-            choices = self._main_menu(t)
+        while True:          
+            print_newline()
+
+            self.current.display_results()
+            choices = self._main_menu()
             choice = validate_num(SELECT, self, self.start_up, size=len(choices)) - 1
             option = choices[choice]
 
-            if self.s_tweets and option not in ['Select a tweet', 'See more tweets']:
-                self.s_tweets = None
-
-            """
-            Main outline for program
-
-            if option  == 'Select a tweet':
-                self.tweets.choose_tweet()
-            elif option == 'See more tweets':
-                more_tweets()
-            elif option == 'Search tweets':
-                search_tweets()
-            elif option == 'Search users':
-                search_users()
-            elif option == 'Compose tweet':
-                compose_tweet()
-            elif option == 'List followers':
-                list_followers()
-            elif option == 'Manage lists':
-                manage_lists()
-            elif option == 'Logout':
-                self.logout()
-            """
+            category = self.current.get_category()
 
             # Currently operating functionalties
-            if option == 'Select a tweet':
-                t.choose_tweet()
-            elif option == 'See more tweets':
-                t.more_tweets()
+            if option == 'Select a result':
+                self.current.choose_result()
+                self.current = self.tweets
+            elif option == 'See more results':
+                self.current.more_results()
             elif option == 'Search tweets':
-                self.s_tweets = search_tweets(self, self.username) 
+                self.current = search_tweets(self)
+            elif category == 'TweetSearch' and option == 'Do another search':
+                self.current = search_tweets(self)
+            elif option == 'Search users':
+                self.current = search_users(self) 
+            elif category == 'UserSearch' and option == 'Do another search':
+                self.current = search_users(self)
             elif option == 'Compose tweet':
-                compose_tweet(self, self.username, menu_func=self.home)
+                compose_tweet(self)
+            elif option == 'List followers':
+                self.current = list_followers(self)
             elif option == 'Manage lists':
                 self.lists.manage_lists() 
+            elif option == "Home":
+                self.current = self.tweets
+                self.home()
             elif option == 'Logout':
                 self.logout()
    
@@ -235,8 +233,8 @@ class Session:
 
 def main():
     # Log in/sign up user into database
-    session = Session()
-    conn = session.get_conn()
+    twitter = Twitter()
+    conn = twitter.get_conn()
 
     # Log out of the database system
     session.logout()

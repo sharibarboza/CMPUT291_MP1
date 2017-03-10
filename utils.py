@@ -53,6 +53,10 @@ def convert_keywords(keywords, lower=True):
     else:
         return [word for word in keywords] 
 
+def convert_timezone(tz):
+    """Converts an integer to a timezone UTC string"""
+    return "%03d:00" % (tz)
+
 def is_hashtag(term):
     """Return True if term is a hashtag
 
@@ -95,7 +99,10 @@ def check_quit(user_input):
 
     :param: user_input: input from the user
     """
-    return user_input.lower() in ['quit', 'q', 'exit']
+    try: 
+        return user_input.lower() in ['quit', 'q', 'exit']
+    except AttributeError: 
+        return False
 
 def exit_input(choice, menu_func):
     """Determines what to return when a user quits an input prompt
@@ -108,22 +115,26 @@ def exit_input(choice, menu_func):
     else:
         return menu_func()
 
-def press_enter(prompt="Press Enter to continue."):
+def press_enter(session, prompt="Press Enter to continue."):
     """Requires user to press enter key before continuing
 
     :param: string message
     """
-    input(prompt)
+    try:
+        input(prompt)
+    except KeyboardInterrupt:
+        session.exit()
 
-def validate_str(prompt, session, menu_func=None, length=None):
+def validate_str(prompt, session, menu_func=None, length=None, null=True):
     """Used for when user needs to input words
     Commonly used for validating insert values  
     If you are passing a function name, make sure to not put () so it won't be called
  
     :param prompt: string message
+    :param session: Session object
     :param menu_func: if user enters quit, return to this function
     :param length (optional): restricts the number of characters
-    :param session: Session object, for when user exits program
+    :param null (optional): if False, doesn't accept empty string
     """
     valid = False
     usr_input = None
@@ -134,8 +145,10 @@ def validate_str(prompt, session, menu_func=None, length=None):
         except KeyboardInterrupt:
             session.exit() 
         if check_quit(usr_input):
-            exit_input(usr_input, menu_func) 
-        if length and len(usr_input) > length:
+            return exit_input(usr_input, menu_func)
+        elif not null and len(usr_input) == 0:
+            valid = False 
+        elif length and len(usr_input) > length:
             print("Input must be %d characters or less." % (length))
             valid = False
         else:
@@ -164,7 +177,7 @@ def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
             choice = input(prompt)
 
             if check_quit(choice):
-                exit_input(choice, menu_func) 
+                return exit_input(choice, menu_func) 
             if num_type == 'int':
                 choice = int(choice)
             else:
