@@ -123,7 +123,8 @@ class Twitter:
         city = validate_str("Enter your city: ", self, self.start_up, 12)
         timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
         password = validate_str("Enter your password: ", self, self.start_up, 4)
-
+        self.name = name      
+ 
         print_border(50, False)
         print("Name: %s, Email: %s, City: %s, Timezone: %d" % (name, email, city, timezone))
         confirm = validate_yn("Confirm user? y/n: ", self)
