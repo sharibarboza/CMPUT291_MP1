@@ -167,7 +167,7 @@ class UserSearch:
         self.index = 5
         self.more_exist = False
         self.searched = keywords
-        self.keywords = convert_keywords(keywords)
+        self.keywords = keywords.lower() 
 
         if len(self.keywords) > 0: 
             self.category = "UserSearch"

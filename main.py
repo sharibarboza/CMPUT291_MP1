@@ -124,9 +124,9 @@ class Twitter:
         email = validate_str("Enter your email: ", self, self.start_up, 15)
         city = validate_str("Enter your city: ", self, self.start_up, 12)
         timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float', rnge=(-12,14))
-        password = validate_str("Enter your password: ", self, self.start_up, 4)
-        self.name = name      
- 
+        password = self.validate_password() 
+        self.name = name
+
         print_border(50, False)
         print("Name: %s, Email: %s, City: %s, Timezone: %d" % (name, email, city, timezone))
         confirm = validate_yn("Confirm user? y/n: ", self)
@@ -138,6 +138,14 @@ class Twitter:
             press_enter(self)
         else:
             self.start_up()
+
+    def validate_password(self):
+        while True: 
+            password = validate_str("Enter your password: ", self, self.start_up, 4)
+            if valid_password(password):
+                return password
+            else:
+                print("The password you entered contains invalid characters.") 
 
     def generate_user(self):
         """Generates a new unique user id for user sign-up"""

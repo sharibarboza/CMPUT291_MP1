@@ -107,8 +107,15 @@ def find_user(curs, username, password):
     :param username: user id (must be a number)
     :param password: user password (4 char)
     """
-    curs.execute('select * from users where usr=:1 and pwd=:2', [username,password])
-    return curs.fetchone()
+    pwd = password.ljust(4)
+    curs.execute('select * from users where usr=:1 and pwd=:2', [username,pwd])
+    user = curs.fetchone()
+    pwd = user[1].rstrip()
+    
+    if password == pwd:
+        return user
+    else:
+        return None 
 
 def user_exists(curs, user):
     """ Checks if a user exists in the database
@@ -360,46 +367,28 @@ def match_tweet(curs, keywords, order):
     terms = remove_hashtags(keywords)
     curs.execute(q, terms)
 
-def match_name(curs, keywords):
+def match_name(curs, keyword):
     """Matches users whose names contain the keyword
 
     :param curs: cursor object
     :param keywords: input string (e.g. 'John', 'John Doe') 
     """
-    if len(keywords) == 0:
+    if len(keyword) == 0:
         return
 
-    q = "select * from users where "
-    name_q = " lower(name) like '%%' || :%d || '%%'"
+    curs.execute("select * from users where lower(name) like '%%' || :1 || '%%' "
+        "order by length(trim(name))", [keyword])  
 
-    q += name_q % (1)
-
-    for i in range(2, len(keywords) + 1):
-        q += " or" + name_q % (i)
-    q += " order by length(trim(name))"
-    curs.execute(q, keywords)
-
-def match_city(curs, keywords):
+def match_city(curs, keyword):
     """Matches users whose cities contain the keyword
 
     :param curs: cursor object
     :param keywords: input string (e.g. 'Edmonton', 'New York') 
     """
-    if len(keywords) == 0:
+    if len(keyword) == 0:
         return
 
-    temp = []
-    for word in keywords:
-        temp.append(word)
-        temp.append(word)
-
-    q = "select * from users where "
-    name_q = " lower(city) like '%%' || :%d || '%%' and lower(name) not like '%%' || :%d || '%%'"
-
-    q += name_q % (1, 2)
-
-    for i in range(2, len(keywords) + 1):
-        q += " or" + name_q % (i, i + 1)
-    q += " order by length(trim(city))"
-    curs.execute(q, temp)   
+    temp = [keyword, keyword] 
+    curs.execute("select * from users where lower(city) like '%%' || :1 || '%%' "
+        "and lower(name) not like '%%' || :2 || '%%' order by length(trim(city))", temp) 
 
