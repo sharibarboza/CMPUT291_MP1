@@ -156,7 +156,7 @@ class Tweet:
 
         return choices
 
-    def display(self, index=None, rt_user=None, result="Result"):
+    def display(self, index=None, rt_user=None, result="Result", width=65):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
       
@@ -178,7 +178,7 @@ class Tweet:
             text_str = "@%s %s" % (self.reply_user, self.text)
         else:
             text_str = self.text
-        text1, text2 = self.split_text(text_str)
+        text1, text2 = self.split_text(text_str, max_width=width)
 
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
         line1_2 = "  {:{width}}".format(date_user, width=col2_width)
@@ -480,12 +480,19 @@ class TweetSearch:
             split_title(title, self.session.get_name().upper())
         print_border(thick=True, sign='|') 
 
+        if self.search:
+            result = "Result"
+            width = 65
+        else:        
+            result = ""
+            width = 70
+
         for i, tweet in enumerate(self.tweets):
             rt_user = tweet.retweeter()
             if rt_user and tweet.author() != rt_user: 
-                tweet.display(index=i, rt_user=rt_user)
+                tweet.display(index=i, rt_user=rt_user, result=result, width=width)
             else:
-                tweet.display(index=i)
+                tweet.display(index=i, result=result, width=width)
 
             if i == len(self.tweets) - 1:
                 print_border(thick=False, sign='+')
