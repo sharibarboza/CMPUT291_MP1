@@ -107,9 +107,15 @@ def find_user(curs, username, password):
     :param username: user id (must be a number)
     :param password: user password (4 char)
     """
-    password = password.ljust(4)
-    curs.execute('select * from users where usr=:1 and pwd=:2', [username,password])
-    return curs.fetchone()
+    pwd = password.ljust(4)
+    curs.execute('select * from users where usr=:1 and pwd=:2', [username,pwd])
+    user = curs.fetchone()
+    pwd = user[1].rstrip()
+    
+    if password == pwd:
+        return user
+    else:
+        return None 
 
 def user_exists(curs, user):
     """ Checks if a user exists in the database
