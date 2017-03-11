@@ -150,7 +150,7 @@ class Tweet:
         been selected
         Returns the selected option from the tweet menu
         """
-        choices = ["Reply", "Retweet", "Go back", "Do another search", "Home", "Logout"]
+        choices = ["Reply", "Retweet", "Go back", "Search for other tweets", "Home", "Logout"]
         print_border(thick=True)
         display_selections(choices)
 
@@ -523,7 +523,7 @@ class TweetSearch:
             self.select_result(tweet)                
         elif option == "Go back":
             self.session.home(self, reset=False) 
-        elif option == "Do another search":
+        elif option == "Search for other tweets":
             new_search = search_tweets(self.session)
             self.session.home(new_search, reset=False)
         elif option == "Home":
