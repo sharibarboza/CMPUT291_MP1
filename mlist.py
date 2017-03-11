@@ -23,7 +23,7 @@ class ListManager:
         self.session = session
         self.username = session.get_username()
         self.con = session.get_conn()
-        self.curs = self.con.cursor()
+        self.curs = session.get_curs() 
 
     def manage_lists(self):
         while True:
@@ -50,7 +50,6 @@ class ListManager:
             elif num_choose == 5:
                 delete_lmember(self.session, self.username, self.curs, self.con, self.manage_lists)
             elif num_choose == 6:
-                self.curs.close()
                 self.session.home()
             else:
                 self.session.logout()
