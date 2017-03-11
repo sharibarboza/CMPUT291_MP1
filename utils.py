@@ -76,6 +76,13 @@ def remove_hashtags(keywords):
         new_list.append(word)
     return new_list
 
+def valid_password(password):
+    """Check that password only has alpha-numeric characters"""
+    for ch in password:
+        if not ch.isalnum():
+            return False
+    return True
+
 def display_selections(selections, title_menu=None, length=BORDER_LEN, thick=True, no_border=False):
     """Helper method for easily displaying numbered lists   
  
