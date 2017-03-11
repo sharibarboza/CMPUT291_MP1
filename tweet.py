@@ -240,7 +240,7 @@ class Tweet:
         print_string("Posted: %s" % (self.date_str))
 
         if (self.replyto):
-            print_string("Reply to: (%s @%d)" % (self.reply_name, self.reply_user))
+            print_string("Reply to: @%d (%s)" % (self.reply_user, self.reply_name))
         else:
             print_string("Reply to: None")
 
@@ -373,23 +373,19 @@ class TweetSearch:
         self.rows = None
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
-        self.logged_user = "Logged in: %d (%s)" % (self.user, self.session.get_name())
-
-        if len(keywords) > 0:
+ 
+        if len(self.keywords) > 0: 
             self.category = "TweetSearch"
+            self.search = True
         else:
             self.category = "Home"
+            self.search = False
+
+    def is_search(self): 
+        return self.search
 
     def get_category(self):
-        return self.category
-
-        if len(keywords) > 0:
-            self.category = "TweetSearch"
-        else:
-            self.category = "Home"
-
-    def get_category(self):
-        return self.category
+        return self.category 
 
     def get_searched(self):
         width = 50
@@ -397,6 +393,19 @@ class TweetSearch:
             return self.searched[:width] + "..."
         else:
             return self.searched
+
+    def reset(self):
+        self.all_tweets = []
+        self.tweets = []
+        self.more_exist = False
+        self.rows = None
+        self.tweet_index = 5
+
+        if not self.search: 
+            self.get_user_tweets()
+        else:
+            self.get_search_tweets()
+        return self 
 
     def get_search_tweets(self):
         """Find tweets matching keywords"""
@@ -453,7 +462,7 @@ class TweetSearch:
     def display_results(self):
         """Display resulting tweets 5 at a time ordered by date"""
         print_border(thick=True) 
-        if self.category == "TweetSearch": 
+        if self.search: 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
             print_string(title)
         else: 
@@ -474,7 +483,7 @@ class TweetSearch:
                 print_border(thick=False, sign='|')
 
         if len(self.tweets) == 0:
-            if len(self.keywords) > 0:
+            if self.search: 
                 print_string("Sorry, there are no tweets that match that query.")
             else:
                 print_string("You have no tweets yet.")

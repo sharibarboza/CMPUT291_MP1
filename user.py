@@ -143,7 +143,7 @@ class User:
 
 class UserSearch:
 
-    def __init__(self, session, keywords='', followers=False):
+    def __init__(self, session, keywords=''):
         self.session = session
         self.conn = session.get_conn()
         self.curs = session.get_curs() 
@@ -156,13 +156,18 @@ class UserSearch:
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
 
-        if followers:
-            self.category = "Followers"
-        else:
+        if len(self.keywords) > 0: 
             self.category = "UserSearch"
+            self.search = True
+        else:
+            self.category = "Follows"
+            self.search = False
+
+    def is_search(self): 
+        return self.search
 
     def get_category(self):
-        return self.category
+        return self.category 
 
     def get_searched(self):
         width = 50
@@ -170,6 +175,18 @@ class UserSearch:
             return self.searched[:width] + "..."
         else:
             return self.searched
+
+    def reset(self):
+        self.all_results = []
+        self.all_users = []
+        self.users = []
+        self.more_exist = False
+        self.index = 5
+
+        if self.search:
+            self.get_results()
+        else:
+            self.get_follows()
 
     def get_follows(self):
         get_followers(self.curs, self.user)
@@ -203,7 +220,7 @@ class UserSearch:
 
     def display_results(self):
         print_border(thick=True)
-        if self.category == "UserSearch": 
+        if self.search: 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
         else:
             title = "YOUR FOLLOWERS"
@@ -218,7 +235,7 @@ class UserSearch:
                 print_border(thick=False, sign='|')
 
         if len(self.users) == 0:
-            if self.category == "UserSearch":
+            if self.search: 
                 print_string("Sorry, there are no users that match that query.")
             else:
                 print_string("You have no followers.")

@@ -168,10 +168,10 @@ class Twitter:
             if self.current.more_results_exist():
                 choices.insert(1, "See more results")
 
-        if self.current.get_category() in ["UserSearch", "TweetSearch"]:
+        if self.current.is_search(): 
             choices.append("Do another search")
 
-        if self.current.get_category() == "Home":
+        if self.current.get_category() == "Home": 
             main_list = [
                 "Search tweets", 
                 "Search users", 
@@ -193,6 +193,7 @@ class Twitter:
             self.current = self.tweets
         else:
             self.current = current
+        self.current = self.current.reset()
 
         while True:          
             print_newline()
