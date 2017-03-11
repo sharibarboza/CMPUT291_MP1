@@ -113,8 +113,8 @@ class Tweet:
             self.reply_text = get_text_from_tid(self.curs, self.replyto)
 
         self.date_str = convert_date(self.date)
-        self.rep_cnt = get_rep_cnt(self.curs, self.id)
-        self.ret_cnt = get_ret_cnt(self.curs, self.id)
+        self.rep_cnt = None 
+        self.ret_cnt = None 
         self.writer_name = get_name(self.curs, self.writer)
         
         self.terms = get_hashtags(self.curs, self.id)
@@ -124,6 +124,10 @@ class Tweet:
     def author(self):
         """Return the tweet writer"""
         return self.writer
+
+    def replyer(self):
+        """Return the replyto user"""
+        return self.replyto
 
     def retweeter(self):
         """Return the id of retweeter"""
@@ -167,7 +171,7 @@ class Tweet:
         col1_width = len(tweet_index) + 1
         col2_width = BORDER_LEN - col1_width - 3 
         date_line = "%s" % (self.date_str)
-        date_user = "%d (%s) - %s" % (self.writer, self.writer_name, date_line)
+        date_user = "%s @%d - %s" % (self.writer_name, self.writer, date_line)
         blank = " " * col1_width
        
         if self.replyto is not None:
@@ -236,13 +240,16 @@ class Tweet:
         print_newline(no_border=False)
 
         print_string("Tweet ID: %d" % (self.id))
-        print_string("Written by: %s @%d" % (self.writer_name, self.writer))
+        print_string("Written by: %s @%d" % (self.writer_name, self.writer)) 
         print_string("Posted: %s" % (self.date_str))
 
         if (self.replyto):
-            print_string("Reply to: @%d (%s)" % (self.reply_user, self.reply_name))
+            print_string("Reply to: %s @%d" % (self.reply_name, self.reply_user)) 
         else:
             print_string("Reply to: None")
+
+        self.rep_cnt = get_rep_cnt(self.curs, self.id)
+        self.ret_cnt = get_ret_cnt(self.curs, self.id)
 
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
@@ -386,6 +393,9 @@ class TweetSearch:
 
     def get_category(self):
         return self.category 
+ 
+    def is_first_page(self):
+        return self.tweet_index <= 10 
 
     def get_searched(self):
         width = 50
@@ -486,7 +496,7 @@ class TweetSearch:
             if self.search: 
                 print_string("Sorry, there are no tweets that match that query.")
             else:
-                print_string("You have no tweets yet.")
+                print_string("You are not following anyone.")
             print_border(thick=False, sign='|')
 
     def select_result(self, tweet):

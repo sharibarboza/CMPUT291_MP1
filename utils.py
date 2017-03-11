@@ -156,7 +156,10 @@ def validate_str(prompt, session, menu_func=None, length=None, null=True):
 
     return usr_input
 
-def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
+def in_range(num, rnge):
+    return num in range(rnge[0], rnge[1] + 1)
+
+def validate_num(prompt, session, menu_func=None, size=None, num_type='int', rnge=None):
     """Used for when user needs to input a single number
     Used mainly for menu selections
     If you are passing a function name, make sure to not put () so it won't be called
@@ -168,6 +171,8 @@ def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
     :param session: Session object, for when user exits program
     """
     assert(num_type=='int' or num_type=='float'), "type must be either int or float"
+    if rnge is not None:
+        assert(isinstance(rnge, tuple)), "rnge must be a tuple"
 
     valid = False
     choice = None
@@ -193,7 +198,11 @@ def validate_num(prompt, session, menu_func=None, size=None, num_type='int'):
         except KeyboardInterrupt:
             session.exit()
         else:
-            valid = True
+            if rnge and not in_range(choice, rnge):
+                print("Number must be from -12 to 14.")
+                valid = False
+            else:
+                valid = True
 
     if num_type == 'int':
         return int(choice)

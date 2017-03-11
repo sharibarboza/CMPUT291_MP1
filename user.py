@@ -37,10 +37,9 @@ class User:
         self.timezone = data[5]
         self.tz_str = convert_timezone(self.timezone)
 
-        self.rows = get_user_stats(self.curs, self.id)
-        self.following = self.rows[0][1]
-        self.followers = self.rows[0][2]
-        self.num_tweets = self.rows[0][3]
+        self.following = None 
+        self.followers = None 
+        self.num_tweets = None 
 
         self.index = 3
         self.all_tweets = [] 
@@ -59,6 +58,12 @@ class User:
         display_selections(choices)
 
         return choices
+
+    def get_stats(self):
+        rows = get_user_stats(self.curs, self.id)
+        self.following = rows[0][1]
+        self.followers = rows[0][2]
+        self.num_tweets = rows[0][3]
 
     def get_tweets(self):
         get_user_tweets(self.curs, self.id)
@@ -81,7 +86,7 @@ class User:
 
         col1_width = len(user_index) + 1
         col2_width = BORDER_LEN - col1_width - 3
-        user_str = "%d (%s)" % (self.id, self.name)
+        user_str = "%s @%d" % (self.name, self.id)
 
         city_str = "%s" % (self.city)
         blank = " " * col1_width
@@ -95,6 +100,7 @@ class User:
         print_string(blank + line2_2)
 
     def display_stats(self):
+        self.get_stats()
         print_newline()
         print_border(thick=True)
         print_string("User Statistics".upper())
@@ -122,7 +128,11 @@ class User:
         return choices[choice-1]
 
     def display_tweet(self, tweet):
-        text1, text2 = tweet.split_text(tweet.get_text(), max_width=77)
+        text = tweet.get_text()
+        reply = tweet.replyer()
+        if reply is not None:
+            text = "@%d %s" % (reply, text)
+        text1, text2 = tweet.split_text(text, max_width=77)
         
         print_border(thick=False, sign='|')
         print_string(text1)
