@@ -503,7 +503,7 @@ class TweetSearch:
             tweet.retweet()         
             self.select_result(tweet)                
         elif option == "Go back":
-            self.session.home(self) 
+            self.session.home(self, reset=False) 
         elif option == "Do another search":
             new_search = search_tweets(self.session)
             self.session.home(new_search)

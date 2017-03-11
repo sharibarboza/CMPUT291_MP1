@@ -15,7 +15,7 @@ def search_users(session):
 
 def list_followers(session):
     """Gets the user's followers"""
-    f_users = UserSearch(session, followers=True)
+    f_users = UserSearch(session)
     f_users.get_follows() 
     return f_users
 
@@ -27,6 +27,7 @@ class User:
         self.conn = session.get_conn()
         self.curs = session.get_curs()
         self.logged_user = session.get_username()
+        self.search = session.get_current().is_search()
         
         self.id = data[0]
         self.pwd = data[1]
@@ -48,8 +49,10 @@ class User:
         self.get_tweets()
 
     def user_menu(self):
-        choices = ["Follow", "Go back", "Do another search", "Home", "Logout"]
-        if self.more_exist:
+        choices = ["Follow", "Go back", "Home", "Logout"]
+        if self.search: 
+            choices.insert(1, "Do another search")
+        if self.more_exist: 
             choices.insert(1, "See more tweets")
 
         print_border(thick=True)
@@ -251,7 +254,7 @@ class UserSearch:
             user.more_tweets()
             self.select_result(user)
         elif option == "Go back": 
-            self.session.home(self)
+            self.session.home(self, reset=False)
         elif option == "Do another search": 
             new_search = search_users(self.session)
             self.session.home(new_search)

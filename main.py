@@ -58,6 +58,10 @@ class Twitter:
         """Return the user's first and last name"""
         return self.name
 
+    def get_current(self):
+        """Get the current functionality"""
+        return self.current
+
     def start_up(self):
         """Displays start up screen to provide options for both
         registered and unregistered users 
@@ -168,7 +172,8 @@ class Twitter:
             if self.current.more_results_exist():
                 choices.insert(1, "See more results")
 
-        if self.current.is_search(): 
+        if self.current.is_search():
+            print(self.current.get_category()) 
             choices.append("Do another search")
 
         if self.current.get_category() == "Home": 
@@ -187,13 +192,15 @@ class Twitter:
         display_selections(choices, no_border=True)
         return choices
 
-    def home(self, current=None):
+    def home(self, current=None, reset=True):
         """Displays main system functionalities menu"""
         if current is None:
             self.current = self.tweets
         else:
             self.current = current
-        self.current = self.current.reset()
+
+        if reset:
+            self.current = self.current.reset()
 
         while True:          
             print_newline()
