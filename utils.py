@@ -199,7 +199,7 @@ def validate_num(prompt, session, menu_func=None, size=None, num_type='int', rng
             session.exit()
         else:
             if rnge and not in_range(choice, rnge):
-                print("Number must be from -12 to 14.")
+                print("Number must be from %d to %d." % (rnge[0], rnge[1])) 
                 valid = False
             else:
                 valid = True
