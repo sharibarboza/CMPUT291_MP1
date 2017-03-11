@@ -106,7 +106,7 @@ class User:
         print_string("User Statistics".upper())
         print_border(thick=True, sign='|')
 
-        print_string("Username: %d" % (self.id))
+        print_string("Username: @%d" % (self.id))
         print_string("Name: %s" % (self.name))
         print_string("City: %s UTC (%s)" % (self.city, self.tz_str))
         print_string("Email: %s" % (self.email))
@@ -267,7 +267,7 @@ class UserSearch:
             self.session.home(self, reset=False)
         elif option == "Do another search": 
             new_search = search_users(self.session)
-            self.session.home(new_search)
+            self.session.home(new_search, reset=False)
         elif option == "Home": 
             self.session.home()
         elif option == "Logout": 

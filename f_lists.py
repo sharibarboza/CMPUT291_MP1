@@ -76,13 +76,16 @@ def get_lhas_user(session, username, curs):
     print_string(headers, length=BORD_LEN)
     print_border(BORD_LEN, False, sign='|')
 
-    for row in rows:
+    for i, row in enumerate(rows):
         owner = row[0]
         name = row[1]
         lname = row[2]
         row_str = "%-5s | %-20s | %-12s" % (owner, name, lname)
         print_string(row_str, length=BORD_LEN)
-        print_border(BORD_LEN, False)
+        if i == len(rows) - 1:
+            print_border(BORD_LEN, False)
+        else: 
+            print_border(BORD_LEN, False, sign='|')
 
     press_enter(session)
     return
@@ -115,7 +118,7 @@ def add_lmember(session, username, curs, con, manage_lists):
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
         press_enter(session)
-        add_lmember(session, username, curs, con)
+        add_lmember(session, username, curs, con, manage_lists)
     else:
         prompt = "Enter the member you want to add: "
         member = validate_num(prompt, session, menu_func=manage_lists)
@@ -142,7 +145,7 @@ def delete_lmember(session, username, curs, con, manage_lists):
     if ( not list_exists(curs,lname,username)):
         print ("That list does not exist!")
         press_enter(session)
-        delete_lmember(session, username, curs, con)
+        delete_lmember(session, username, curs, con, manage_lists)
     else:
         get_members(curs, username, lname)
         rows = curs.fetchall()   

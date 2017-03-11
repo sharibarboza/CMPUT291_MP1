@@ -525,7 +525,7 @@ class TweetSearch:
             self.session.home(self, reset=False) 
         elif option == "Do another search":
             new_search = search_tweets(self.session)
-            self.session.home(new_search)
+            self.session.home(new_search, reset=False)
         elif option == "Home":
             self.session.home()
         elif option == "Logout":
