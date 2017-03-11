@@ -60,6 +60,11 @@ def get_users_l(username, curs, con):
 def get_lhas_user(session, username, curs):
     curs.execute("select lists.owner, users.name, lists.lname from lists,includes,users where  users.usr = lists.owner and lists.lname=includes.lname and includes.member =:1",[username])
     rows = curs.fetchall()
+
+    if len(rows) == 0:
+        print("You are not on any lists.")
+        return
+
     cols = curs.description
     owner_header = cols[0][0]
     name_header = cols[1][0]

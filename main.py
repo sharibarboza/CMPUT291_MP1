@@ -26,10 +26,8 @@ class Twitter:
         self.current = None
         self.lists = None 
 
-        if not tStat_exists(self.curs):
-            create_tStat(self.curs)
-        if not uStat_exists(self.curs):
-            create_uStat(self.curs)
+        create_tStat(self.curs)
+        create_uStat(self.curs)
 
         self.start_up()
 
@@ -57,6 +55,10 @@ class Twitter:
     def get_name(self):
         """Return the user's first and last name"""
         return self.name
+
+    def get_current(self):
+        """Get the current functionality"""
+        return self.current
 
     def start_up(self):
         """Displays start up screen to provide options for both
@@ -121,7 +123,7 @@ class Twitter:
         name = validate_str("Enter your name: ", self, self.start_up, 20)
         email = validate_str("Enter your email: ", self, self.start_up, 15)
         city = validate_str("Enter your city: ", self, self.start_up, 12)
-        timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float')
+        timezone = validate_num("Enter your timezone: ", self, self.start_up, num_type='float', rnge=(-12,14))
         password = validate_str("Enter your password: ", self, self.start_up, 4)
         self.name = name      
  
@@ -130,7 +132,7 @@ class Twitter:
         confirm = validate_yn("Confirm user? y/n: ", self)
 
         if confirm in ["y", "yes"]:
-            print("Welcome %s! Your new user id is %d." % (name, self.username))
+            print("Welcome %s! Your username is %d." % (name, self.username))
             data = [self.username, password, name, email, city, timezone]
             insert_user(self.conn, data)
             press_enter(self)
@@ -160,6 +162,7 @@ class Twitter:
         :param t: TweetSearch object (can be self.tweets or self.s_tweets)
         """
         choices = []
+        category = self.current.get_category()
 
         # Allow tweet selection if user has any tweets
         if self.current.results_exist():
@@ -168,10 +171,10 @@ class Twitter:
             if self.current.more_results_exist():
                 choices.insert(1, "See more results")
 
-        if self.current.get_category() in ["UserSearch", "TweetSearch"]:
+        if self.current.is_search():
             choices.append("Do another search")
 
-        if self.current.get_category() == "Home":
+        if category == "Home": 
             main_list = [
                 "Search tweets", 
                 "Search users", 
@@ -179,20 +182,27 @@ class Twitter:
                 "List followers", 
                 "Manage lists"
             ]
-            choices.extend(main_list) 
-        else:
+            choices.extend(main_list)
+   
+        home_screen = False 
+        if category == "Home":
+            home_screen = self.current.is_first_page() 
+        if not home_screen or category != "Home": 
             choices.append("Home")
         choices.append("Logout")
 
         display_selections(choices, no_border=True)
         return choices
 
-    def home(self, current=None):
+    def home(self, current=None, reset=True):
         """Displays main system functionalities menu"""
         if current is None:
             self.current = self.tweets
         else:
             self.current = current
+
+        if reset:
+            self.current = self.current.reset()
 
         while True:          
             print_newline()

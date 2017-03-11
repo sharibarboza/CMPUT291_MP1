@@ -15,7 +15,7 @@ def search_users(session):
 
 def list_followers(session):
     """Gets the user's followers"""
-    f_users = UserSearch(session, followers=True)
+    f_users = UserSearch(session)
     f_users.get_follows() 
     return f_users
 
@@ -27,6 +27,7 @@ class User:
         self.conn = session.get_conn()
         self.curs = session.get_curs()
         self.logged_user = session.get_username()
+        self.search = session.get_current().is_search()
         
         self.id = data[0]
         self.pwd = data[1]
@@ -36,10 +37,9 @@ class User:
         self.timezone = data[5]
         self.tz_str = convert_timezone(self.timezone)
 
-        self.rows = get_user_stats(self.curs, self.id)
-        self.following = self.rows[0][1]
-        self.followers = self.rows[0][2]
-        self.num_tweets = self.rows[0][3]
+        self.following = None 
+        self.followers = None 
+        self.num_tweets = None 
 
         self.index = 3
         self.all_tweets = [] 
@@ -48,14 +48,22 @@ class User:
         self.get_tweets()
 
     def user_menu(self):
-        choices = ["Follow", "Go back", "Do another search", "Home", "Logout"]
-        if self.more_exist:
+        choices = ["Follow", "Go back", "Home", "Logout"]
+        if self.search: 
+            choices.insert(1, "Do another search")
+        if self.more_exist: 
             choices.insert(1, "See more tweets")
 
         print_border(thick=True)
         display_selections(choices)
 
         return choices
+
+    def get_stats(self):
+        rows = get_user_stats(self.curs, self.id)
+        self.following = rows[0][1]
+        self.followers = rows[0][2]
+        self.num_tweets = rows[0][3]
 
     def get_tweets(self):
         get_user_tweets(self.curs, self.id)
@@ -78,7 +86,7 @@ class User:
 
         col1_width = len(user_index) + 1
         col2_width = BORDER_LEN - col1_width - 3
-        user_str = "%d (%s)" % (self.id, self.name)
+        user_str = "%s @%d" % (self.name, self.id)
 
         city_str = "%s" % (self.city)
         blank = " " * col1_width
@@ -92,6 +100,7 @@ class User:
         print_string(blank + line2_2)
 
     def display_stats(self):
+        self.get_stats()
         print_newline()
         print_border(thick=True)
         print_string("User Statistics".upper())
@@ -119,7 +128,11 @@ class User:
         return choices[choice-1]
 
     def display_tweet(self, tweet):
-        text1, text2 = tweet.split_text(tweet.get_text(), max_width=77)
+        text = tweet.get_text()
+        reply = tweet.replyer()
+        if reply is not None:
+            text = "@%d %s" % (reply, text)
+        text1, text2 = tweet.split_text(text, max_width=77)
         
         print_border(thick=False, sign='|')
         print_string(text1)
@@ -143,7 +156,7 @@ class User:
 
 class UserSearch:
 
-    def __init__(self, session, keywords='', followers=False):
+    def __init__(self, session, keywords=''):
         self.session = session
         self.conn = session.get_conn()
         self.curs = session.get_curs() 
@@ -156,13 +169,18 @@ class UserSearch:
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
 
-        if followers:
-            self.category = "Followers"
-        else:
+        if len(self.keywords) > 0: 
             self.category = "UserSearch"
+            self.search = True
+        else:
+            self.category = "Follows"
+            self.search = False
+
+    def is_search(self): 
+        return self.search
 
     def get_category(self):
-        return self.category
+        return self.category 
 
     def get_searched(self):
         width = 50
@@ -170,6 +188,18 @@ class UserSearch:
             return self.searched[:width] + "..."
         else:
             return self.searched
+
+    def reset(self):
+        self.all_results = []
+        self.all_users = []
+        self.users = []
+        self.more_exist = False
+        self.index = 5
+
+        if self.search:
+            self.get_results()
+        else:
+            self.get_follows()
 
     def get_follows(self):
         get_followers(self.curs, self.user)
@@ -203,7 +233,7 @@ class UserSearch:
 
     def display_results(self):
         print_border(thick=True)
-        if self.category == "UserSearch": 
+        if self.search: 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
         else:
             title = "YOUR FOLLOWERS"
@@ -218,7 +248,7 @@ class UserSearch:
                 print_border(thick=False, sign='|')
 
         if len(self.users) == 0:
-            if self.category == "UserSearch":
+            if self.search: 
                 print_string("Sorry, there are no users that match that query.")
             else:
                 print_string("You have no followers.")
@@ -234,7 +264,7 @@ class UserSearch:
             user.more_tweets()
             self.select_result(user)
         elif option == "Go back": 
-            self.session.home(self)
+            self.session.home(self, reset=False)
         elif option == "Do another search": 
             new_search = search_users(self.session)
             self.session.home(new_search)

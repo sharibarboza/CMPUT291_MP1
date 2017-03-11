@@ -113,8 +113,8 @@ class Tweet:
             self.reply_text = get_text_from_tid(self.curs, self.replyto)
 
         self.date_str = convert_date(self.date)
-        self.rep_cnt = get_rep_cnt(self.curs, self.id)
-        self.ret_cnt = get_ret_cnt(self.curs, self.id)
+        self.rep_cnt = None 
+        self.ret_cnt = None 
         self.writer_name = get_name(self.curs, self.writer)
         
         self.terms = get_hashtags(self.curs, self.id)
@@ -124,6 +124,10 @@ class Tweet:
     def author(self):
         """Return the tweet writer"""
         return self.writer
+
+    def replyer(self):
+        """Return the replyto user"""
+        return self.replyto
 
     def retweeter(self):
         """Return the id of retweeter"""
@@ -152,7 +156,7 @@ class Tweet:
 
         return choices
 
-    def display(self, index=None, rt_user=None, result="Result"):
+    def display(self, index=None, rt_user=None, result="Result", width=65):
         """ Displays basic info on a tweet
         Used for first screen after login or a tweet search
       
@@ -167,14 +171,14 @@ class Tweet:
         col1_width = len(tweet_index) + 1
         col2_width = BORDER_LEN - col1_width - 3 
         date_line = "%s" % (self.date_str)
-        date_user = "%d (%s) - %s" % (self.writer, self.writer_name, date_line)
+        date_user = "%s @%d - %s" % (self.writer_name, self.writer, date_line)
         blank = " " * col1_width
        
         if self.replyto is not None:
             text_str = "@%s %s" % (self.reply_user, self.text)
         else:
             text_str = self.text
-        text1, text2 = self.split_text(text_str)
+        text1, text2 = self.split_text(text_str, max_width=width)
 
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
         line1_2 = "  {:{width}}".format(date_user, width=col2_width)
@@ -236,17 +240,22 @@ class Tweet:
         print_newline(no_border=False)
 
         print_string("Tweet ID: %d" % (self.id))
-        print_string("Written by: %s @%d" % (self.writer_name, self.writer))
+        print_string("Written by: %s @%d" % (self.writer_name, self.writer)) 
         print_string("Posted: %s" % (self.date_str))
 
-        if (self.replyto):
-            print_string("Reply to: (%s @%d)" % (self.reply_name, self.reply_user))
-        else:
-            print_string("Reply to: None")
-
+        self.rep_cnt = get_rep_cnt(self.curs, self.id)
+        self.ret_cnt = get_ret_cnt(self.curs, self.id)
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
-        
+ 
+        if (self.replyto):
+            rep_str = "%s @%d - %s" % (self.reply_name, self.reply_user, self.reply_text)
+            text1, text2 = self.split_text(rep_str)
+            print_string("In reply to: %s" % (text1))
+            if len(text2) > 1:
+                print_string(text2)
+        else:
+            print_string("In reply to: None")
         choices = self.tweet_menu()
         choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
         return choices[choice-1]
@@ -320,7 +329,7 @@ class Tweet:
         """Returns True if all terms do not exceed restriction length"""
         for term in self.terms:
             if len(term) > 10:
-                print_string("%s is too long. Must be 10 characters or less.\n" % (term))
+                print("%s is too long. Must be 10 characters or less.\n" % (term))
                 self.terms = []
                 return False
         return True
@@ -373,23 +382,22 @@ class TweetSearch:
         self.rows = None
         self.searched = keywords
         self.keywords = convert_keywords(keywords)
-        self.logged_user = "Logged in: %d (%s)" % (self.user, self.session.get_name())
-
-        if len(keywords) > 0:
+ 
+        if len(self.keywords) > 0: 
             self.category = "TweetSearch"
+            self.search = True
         else:
             self.category = "Home"
+            self.search = False
+
+    def is_search(self): 
+        return self.search
 
     def get_category(self):
-        return self.category
-
-        if len(keywords) > 0:
-            self.category = "TweetSearch"
-        else:
-            self.category = "Home"
-
-    def get_category(self):
-        return self.category
+        return self.category 
+ 
+    def is_first_page(self):
+        return self.tweet_index <= 10 
 
     def get_searched(self):
         width = 50
@@ -397,6 +405,19 @@ class TweetSearch:
             return self.searched[:width] + "..."
         else:
             return self.searched
+
+    def reset(self):
+        self.all_tweets = []
+        self.tweets = []
+        self.more_exist = False
+        self.rows = None
+        self.tweet_index = 5
+
+        if not self.search: 
+            self.get_user_tweets()
+        else:
+            self.get_search_tweets()
+        return self 
 
     def get_search_tweets(self):
         """Find tweets matching keywords"""
@@ -453,7 +474,7 @@ class TweetSearch:
     def display_results(self):
         """Display resulting tweets 5 at a time ordered by date"""
         print_border(thick=True) 
-        if self.category == "TweetSearch": 
+        if self.search: 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
             print_string(title)
         else: 
@@ -461,12 +482,19 @@ class TweetSearch:
             split_title(title, self.session.get_name().upper())
         print_border(thick=True, sign='|') 
 
+        if self.search:
+            result = "Result"
+            width = 65
+        else:        
+            result = ""
+            width = 70
+
         for i, tweet in enumerate(self.tweets):
             rt_user = tweet.retweeter()
             if rt_user and tweet.author() != rt_user: 
-                tweet.display(index=i, rt_user=rt_user)
+                tweet.display(index=i, rt_user=rt_user, result=result, width=width)
             else:
-                tweet.display(index=i)
+                tweet.display(index=i, result=result, width=width)
 
             if i == len(self.tweets) - 1:
                 print_border(thick=False, sign='+')
@@ -474,10 +502,10 @@ class TweetSearch:
                 print_border(thick=False, sign='|')
 
         if len(self.tweets) == 0:
-            if len(self.keywords) > 0:
+            if self.search: 
                 print_string("Sorry, there are no tweets that match that query.")
             else:
-                print_string("You have no tweets yet.")
+                print_string("You are not following anyone.")
             print_border(thick=False, sign='|')
 
     def select_result(self, tweet):
@@ -494,7 +522,7 @@ class TweetSearch:
             tweet.retweet()         
             self.select_result(tweet)                
         elif option == "Go back":
-            self.session.home(self) 
+            self.session.home(self, reset=False) 
         elif option == "Do another search":
             new_search = search_tweets(self.session)
             self.session.home(new_search)
