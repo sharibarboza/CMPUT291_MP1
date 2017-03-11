@@ -243,17 +243,19 @@ class Tweet:
         print_string("Written by: %s @%d" % (self.writer_name, self.writer)) 
         print_string("Posted: %s" % (self.date_str))
 
-        if (self.replyto):
-            print_string("Reply to: %s @%d" % (self.reply_name, self.reply_user)) 
-        else:
-            print_string("Reply to: None")
-
         self.rep_cnt = get_rep_cnt(self.curs, self.id)
         self.ret_cnt = get_ret_cnt(self.curs, self.id)
-
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
-        
+ 
+        if (self.replyto):
+            rep_str = "%s @%d - %s" % (self.reply_name, self.reply_user, self.reply_text)
+            text1, text2 = self.split_text(rep_str)
+            print_string("In reply to: %s" % (text1))
+            if len(text2) > 1:
+                print_string(text2)
+        else:
+            print_string("In reply to: None")
         choices = self.tweet_menu()
         choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
         return choices[choice-1]
