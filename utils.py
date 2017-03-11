@@ -157,7 +157,14 @@ def validate_str(prompt, session, menu_func=None, length=None, null=True):
     return usr_input
 
 def in_range(num, rnge):
-    return num in range(rnge[0], rnge[1] + 1)
+    """Checks if a number is in a certain range
+
+    :param rnge: a tuple containing numbers
+    """
+    if num >= rnge[0] and num <= rnge[1]:
+        return True
+    else:
+        return False 
 
 def validate_num(prompt, session, menu_func=None, size=None, num_type='int', rnge=None):
     """Used for when user needs to input a single number
