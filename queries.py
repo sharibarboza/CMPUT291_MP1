@@ -110,7 +110,11 @@ def find_user(curs, username, password):
     pwd = password.ljust(4)
     curs.execute('select * from users where usr=:1 and pwd=:2', [username,pwd])
     user = curs.fetchone()
-    pwd = user[1].rstrip()
+    
+    if user is None:
+        return None
+    else:
+        pwd = user[1].rstrip()
     
     if password == pwd:
         return user

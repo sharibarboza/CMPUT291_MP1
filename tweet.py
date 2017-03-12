@@ -270,9 +270,8 @@ class Tweet:
     def retweet(self, menu_func=None):
         """Allows logged in user to retweet a selected tweet"""
         if already_retweeted(self.curs, self.user, self.id):
-            print_border(thick=False)
-            print_string("You already retweeted this tweet.")
-            print_border(thick=False)
+            print("You already retweeted this tweet.")
+            press_enter(self.session) 
             return None if menu_func is None else menu_func()
             
         print_border(thick=False)
@@ -338,11 +337,16 @@ class Tweet:
         :param index: the index of the hashtag in the tweet text
         Returns the hashtag term
         """
-        space_index = self.text.find(' ', index)
-        if space_index < 0:
-            space_index = len(self.text) + 1
+        if index + 1 >= len(self.text):
+            return self.text[index:]
 
-        return self.text[index+1:space_index]
+        i = index + 1
+        ch = self.text[i]
+        while i < len(self.text) and ch.isalnum():
+            ch = self.text[i]
+            i += 1
+
+        return self.text[index+1:i-1]
 
     def find_hashtags(self):
         """ Returns a list of all indexes of found hashtags"""
