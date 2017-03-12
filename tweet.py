@@ -6,7 +6,7 @@ def compose_tweet(session, menu_func=None, replyto=None):
     Also inserts any hashtags into hashtags and mentions tables
 
     :param session: Session object 
-    :param user: logged in user's id
+    :param menu_func: the function to return to 
     :param replyto (optional): the user id of who the tweet is replying to
     """
     new_tweet = create_tweet(session, menu_func, replyto)
@@ -27,7 +27,6 @@ def create_tweet(session, menu_func, replyto):
     """Gets info for new tweet and creates new Tweet object
 
     :param session: Session object
-    :param user: logged in user id
     :param menu_func: function to return to if user quits
     :param replyto: id of user to replyto or None
     """
@@ -74,7 +73,6 @@ def search_tweets(session):
     """Match tweets to user's keywords
 
     :param session: session connection
-    :param user: logged in user id
     """
     search_input = validate_str("Enter keywords for tweet search: ", session, session.home, null=False)
     s_tweets = TweetSearch(session, search_input)
@@ -86,9 +84,8 @@ class Tweet:
 
     def __init__(self, session, data):
         """ Represents a single tweet, helps to display tweets to console
-        
-        param conn: database session connection 
-        param user: logged in user (not the tweet writer)
+       
+        param session: Twitter object 
         param data: row values from tweets table corresponding to columns 
         """
         self.session = session
@@ -161,7 +158,9 @@ class Tweet:
         Used for first screen after login or a tweet search
       
         :param index (optional): tweet number (1-5)  
-        :param user (optional): user id of the user who retweeted this tweet
+        :param rt_user (optional): user id of the user who retweeted this tweet
+        :param result (optional): row title
+        :param width (optional): row width for text
         """
         if index is not None: 
             tweet_index = "%s %d" % (result, index + 1)
@@ -203,7 +202,11 @@ class Tweet:
             print_string(blank + line4_2)
 
     def split_text(self, text, max_width=65):
-        """Splits up tweets text into 2 separate lines if too long"""
+        """Splits up tweets text into 2 separate lines if too long
+
+        :param text: text string
+        :param max_width: row width of text
+        """
         space_index = -1
         text = text + " "
         text1 = text
@@ -268,7 +271,10 @@ class Tweet:
         compose_tweet(self.session, menu_func, replyto=self.id)
 
     def retweet(self, menu_func=None):
-        """Allows logged in user to retweet a selected tweet"""
+        """Allows logged in user to retweet a selected tweet
+
+        :param menu_func: return point if user decides to cancel retweet
+        """
         if already_retweeted(self.curs, self.user, self.id):
             print("You already retweeted this tweet.")
             press_enter(self.session) 
@@ -364,7 +370,7 @@ class TweetSearch:
         followed or searching for specific tweets based on keywords
          
         param session: database session connection
-        param user: logged in user id
+        param keywords: input string for tweet search 
         """ 
         self.session = session
         self.conn = session.get_conn() 
@@ -385,16 +391,20 @@ class TweetSearch:
             self.category = "Home"
             self.search = False
 
-    def is_search(self): 
+    def is_search(self):
+        """Return True if category is TweetSearch""" 
         return self.search
 
     def get_category(self):
+        """Return either TweetSearch or Home"""
         return self.category 
  
     def is_first_page(self):
+        """Return True if the current tweets are the first 5 tweets"""
         return self.tweet_index <= 10 
 
     def get_searched(self):
+        """Return user's search keywords"""
         width = 50
         if len(self.searched) > width:
             return self.searched[:width] + "..."
@@ -402,6 +412,7 @@ class TweetSearch:
             return self.searched
 
     def reset(self):
+        """Reset the home page to the first 5 tweets"""
         self.all_tweets = []
         self.tweets = []
         self.more_exist = False
@@ -506,7 +517,7 @@ class TweetSearch:
     def select_result(self, tweet):
         """Prompt user to choose one of the displayed tweets
         
-        Returns selected option from tweet menu 
+        param tweet: The tweet that the user selected 
         """
         option = tweet.display_stats()
 

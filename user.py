@@ -5,7 +5,7 @@ from tweet import Tweet
 def search_users(session):
     """Matches users/cities to keywords
 
-    :param session: Session object
+    :param session: Twitter object 
     """
     search_input = validate_str("Enter keyword for user search: ", session, session.home, null=False)
     s_users = UserSearch(session, keywords=search_input)
@@ -14,7 +14,10 @@ def search_users(session):
 
 
 def list_followers(session):
-    """Gets the user's followers"""
+    """Gets the user's followers
+  
+    :param session: Twitter object
+    """
     f_users = UserSearch(session)
     f_users.get_follows() 
     return f_users
@@ -23,6 +26,11 @@ def list_followers(session):
 class User:
 
     def __init__(self, session, data):
+        """Represents a single user. Displays user information.
+
+        :param session: Twitter object
+        :param data: row values from users table
+        """
         self.session = session
         self.conn = session.get_conn()
         self.curs = session.get_curs()
@@ -48,6 +56,7 @@ class User:
         self.get_tweets()
 
     def user_menu(self):
+        """Displays menu for user selection"""
         choices = ["Follow", "Go back", "Home", "Logout"]
         if self.search: 
             choices.insert(1, "Do another search")
@@ -60,12 +69,14 @@ class User:
         return choices
 
     def get_stats(self):
+        """Gets the stats from uStats view"""
         rows = get_user_stats(self.curs, self.id)
         self.following = rows[0][1]
         self.followers = rows[0][2]
         self.num_tweets = rows[0][3]
 
     def get_tweets(self):
+        """Get the user's tweets"""
         get_user_tweets(self.curs, self.id)
         for row in self.curs.fetchall():
             tweet = Tweet(self.session, row)
@@ -74,11 +85,17 @@ class User:
         self.more_tweets()
 
     def more_tweets(self): 
+        """Get the next 3 tweets for user"""
         self.tweets = self.all_tweets[self.index - 3:self.index]
         self.more_exist = len(self.all_tweets) - self.index > 0
         self.index += 3
 
     def display(self, index=None, result="Result"):
+        """Display user name and city
+
+        :param index: number for user selection
+        :param result: row title
+        """
         if index is not None:
             user_index = "%s %d" % (result, index + 1)
         else:
@@ -100,6 +117,7 @@ class User:
         print_string(blank + line2_2)
 
     def display_stats(self):
+        """Display user statistics"""
         self.get_stats()
         print_newline()
         print_border(thick=True)
@@ -128,6 +146,10 @@ class User:
         return choices[choice-1]
 
     def display_tweet(self, tweet):
+        """Display each tweet for user's statistics
+
+        :param tweet: Tweet object
+        """
         text = tweet.get_text()
         reply = tweet.replyer()
         if reply is not None:
@@ -141,6 +163,7 @@ class User:
         print_string(tweet.tdate())
 
     def follow(self):
+        """Follow this user"""
         if not follows_exists(self.curs, self.logged_user, self.id):
             prompt = "Are you sure you want to follow %s? y/n: " % (self.name)
             confirm = validate_yn(prompt, self.session)
@@ -157,6 +180,11 @@ class User:
 class UserSearch:
 
     def __init__(self, session, keywords=''):
+        """Used for returning search results or listing user's followers
+
+        :param session: Twitter object
+        :param keywords: keywords for user search
+        """
         self.session = session
         self.conn = session.get_conn()
         self.curs = session.get_curs() 
@@ -176,13 +204,16 @@ class UserSearch:
             self.category = "Follows"
             self.search = False
 
-    def is_search(self): 
+    def is_search(self):
+        """Return True if category is UserSearch""" 
         return self.search
 
     def get_category(self):
+        """Return either UserSearch or Follows"""
         return self.category 
 
     def get_searched(self):
+        """Return the user input for user search"""
         width = 50
         if len(self.searched) > width:
             return self.searched[:width] + "..."
@@ -190,6 +221,7 @@ class UserSearch:
             return self.searched
 
     def reset(self):
+        """Reset the users to the first 5 users"""
         self.all_results = []
         self.all_users = []
         self.users = []
@@ -202,6 +234,7 @@ class UserSearch:
             self.get_follows()
 
     def get_follows(self):
+        """Get the rows from the follows table"""
         get_followers(self.curs, self.user)
         for row in self.curs.fetchall():
             self.all_results.append(row)
@@ -210,6 +243,7 @@ class UserSearch:
         self.more_results()
 
     def get_results(self):
+        """Get search results of user search"""
         match_name(self.curs, self.keywords)
         for row in self.curs.fetchall():
             self.all_results.append(row)
@@ -222,16 +256,19 @@ class UserSearch:
         self.more_results()
 
     def add_results(self):
+        """Create User objects"""
         for row in self.all_results:
             user = User(self.session, row)
             self.all_users.append(user) 
 
     def more_results(self):
+        """Get the next 5 users"""
         self.users = self.all_users[self.index - 5:self.index]
         self.more_exist = len(self.all_results) - self.index > 0
         self.index += 5 
 
     def display_results(self):
+        """Display users"""
         print_border(thick=True)
         if self.search: 
             title = "SEARCH RESULTS FOR %s" % (self.get_searched().upper())
@@ -260,6 +297,10 @@ class UserSearch:
             print_border(thick=False)
 
     def select_result(self, user):
+        """Get options for user functionality
+ 
+        :param user: The user that was selected
+        """
         option = user.display_stats()
     
         if option == "Follow": 
@@ -281,6 +322,7 @@ class UserSearch:
         self.session.home(self)
 
     def choose_result(self):
+        """Get input for user selection"""
         prompt = "Enter the result number to select: "
         choice = validate_num(prompt, self.session, size=len(self.users))
         if check_quit(choice):
@@ -292,8 +334,10 @@ class UserSearch:
         self.select_result(user)
 
     def results_exist(self):
+        """Return True if user results exist"""
         return True if len(self.users) > 0 else False
 
     def more_results_exist(self):
+        """Return True if more user results exist"""
         return self.more_exist 
 
