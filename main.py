@@ -35,10 +35,12 @@ class Twitter:
         """ Get connection with filename 
         File should include username and password to log into Oracle
         """
-        if len(sys.argv) > 1:
-            return get_connection(sys.argv[1])
+        if len(sys.argv) == 2:
+            return get_connection(filename=sys.argv[1])
+        elif len(sys.argv) == 3:
+            return get_connection(username=sys.argv[1], password=sys.argv[2])
         else:
-            return get_connection('sql_login.txt')
+            return get_connection(filename='sql_login.txt')
         
     def get_conn(self):
         """Return the connection"""
