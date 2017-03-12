@@ -78,11 +78,11 @@ class User:
         self.more_exist = len(self.all_tweets) - self.index > 0
         self.index += 3
 
-    def display(self, index=None):
+    def display(self, index=None, result="Result"):
         if index is not None:
-            user_index = "Result %d" % (index + 1)
+            user_index = "%s %d" % (result, index + 1)
         else:
-            user_index = "Result %d" % (self.id)
+            user_index = "%s %d" % (result, self.id)
 
         col1_width = len(user_index) + 1
         col2_width = BORDER_LEN - col1_width - 3
@@ -92,9 +92,9 @@ class User:
         blank = " " * col1_width
 
         line1_1 = "{:{width}}".format(user_index, width=col1_width)
-        line1_2 = " {:{width}}".format(user_str, width=col2_width)
-        line2_2 = " {:{width}}".format(city_str, width=col2_width)
-        line3_2 = " {:{width}}".format(self.email, width=col2_width)
+        line1_2 = "  {:{width}}".format(user_str, width=col2_width)
+        line2_2 = "  {:{width}}".format(city_str, width=col2_width)
+        line3_2 = "  {:{width}}".format(self.email, width=col2_width)
 
         print_string(line1_1 + line1_2)
         print_string(blank + line2_2)
@@ -238,10 +238,15 @@ class UserSearch:
         else:
             title = "YOUR FOLLOWERS"
         print_string(title)
-        print_border(thick=True, sign='|') 
+        print_border(thick=True, sign='|')
+
+        if self.search:
+            result = "Result"
+        else:
+            result = "" 
 
         for i, user in enumerate(self.users):
-            user.display(index=i)
+            user.display(index=i, result=result)
             if i == len(self.users) - 1:
                 print_border(thick=False, sign='+')
             else:
