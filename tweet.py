@@ -294,16 +294,6 @@ class Tweet:
         """Returns a list of tid, writer, tdate, text, and replyto"""
         return [self.id, self.writer, self.date, self.text, self.replyto]
 
-    def match_text(self, word):
-        """Return True if search keyword matches a text (but not hashtag)
-
-        :param word: keyword string
-        """
-        if word not in self.terms and word in self.raw_text:
-            return True
-        else:
-            return False
-
     def get_terms(self):
         """Returns the list of hashtag terms for the tweet"""
         return self.terms
