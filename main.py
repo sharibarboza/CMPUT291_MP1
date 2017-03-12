@@ -1,7 +1,6 @@
 import sys
 import cx_Oracle
 
-from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
