@@ -303,7 +303,8 @@ class Tweet:
 
         for tag in hashtags:
             term = self.extract_term(tag).lower()
-            self.terms.append(term)
+            if len(term) > 0:
+                self.terms.append(term)
         
     def insert_terms(self):
         """Inserts all hashtag terms into the hashtags table"""
@@ -338,7 +339,7 @@ class Tweet:
         Returns the hashtag term
         """
         if index + 1 >= len(self.text):
-            return self.text[index:]
+            return "" 
 
         i = index + 1
         ch = self.text[i]
