@@ -347,13 +347,14 @@ class Tweet:
         if index + 1 >= len(self.text):
             return "" 
 
-        i = index + 1
-        ch = self.text[i]
-        while i < len(self.text) and ch.isalnum():
-            ch = self.text[i]
+        i = index
+        while i < len(self.text) - 1 and self.text[i + 1].isalnum():
             i += 1
 
-        return self.text[index+1:i-1]
+        if i + 1 == len(self.text):
+            return self.text[index+1:]
+        else:
+            return self.text[index+1:i+1]
 
     def find_hashtags(self):
         """ Returns a list of all indexes of found hashtags"""
