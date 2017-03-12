@@ -150,7 +150,7 @@ class Tweet:
         been selected
         Returns the selected option from the tweet menu
         """
-        choices = ["Reply", "Retweet", "Go back", "Do another search", "Home", "Logout"]
+        choices = ["Reply", "Retweet", "Go back", "Search for other tweets", "Home", "Logout"]
         print_border(thick=True)
         display_selections(choices)
 
@@ -293,16 +293,6 @@ class Tweet:
     def get_values(self):
         """Returns a list of tid, writer, tdate, text, and replyto"""
         return [self.id, self.writer, self.date, self.text, self.replyto]
-
-    def match_text(self, word):
-        """Return True if search keyword matches a text (but not hashtag)
-
-        :param word: keyword string
-        """
-        if word not in self.terms and word in self.raw_text:
-            return True
-        else:
-            return False
 
     def get_terms(self):
         """Returns the list of hashtag terms for the tweet"""
@@ -523,7 +513,7 @@ class TweetSearch:
             self.select_result(tweet)                
         elif option == "Go back":
             self.session.home(self, reset=False) 
-        elif option == "Do another search":
+        elif option == "Search for other tweets":
             new_search = search_tweets(self.session)
             self.session.home(new_search, reset=False)
         elif option == "Home":
