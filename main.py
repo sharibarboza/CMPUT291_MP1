@@ -1,6 +1,6 @@
 import sys
+import cx_Oracle
 
-from connect import get_connection
 from utils import *
 from queries import * 
 from tweet import TweetSearch, compose_tweet, search_tweets
@@ -13,11 +13,25 @@ Contributors: Hong Zhou, Haotian Zhu, Sharidan Barboza
 Due: March 12 5 PM
 """
 
+def get_connection(username=None, password=None):
+    """
+    Usage Example:
+    from connect import get_connection
+    conn = get_connection("sql_login.txt")
+    """
+    try:
+        return cx_Oracle.connect(username, password, "gwynne.cs.ualberta.ca:1521/CRS")
+    except cx_Oracle.DatabaseError as exc:
+        print("Invalid Oracle username/password; login denied.")
+
 class Twitter:
 
-    def __init__(self):
-        """Establishes a connection with cx_Oracle and logs in user"""
-        self.conn = self.connect() 
+    def __init__(self, connection):
+        """Establishes a connection with cx_Oracle and logs in user
+
+        :param connection: cx_Oracle connection
+        """
+        self.conn = connection 
         self.curs = self.conn.cursor()
         self.username = None
         self.name = None
@@ -28,17 +42,6 @@ class Twitter:
 
         create_tStat(self.curs)
         create_uStat(self.curs)
-
-        self.start_up()
-
-    def connect(self):
-        """ Get connection with filename 
-        File should include username and password to log into Oracle
-        """
-        if len(sys.argv) > 1:
-            return get_connection(sys.argv[1])
-        else:
-            return get_connection('sql_login.txt')
         
     def get_conn(self):
         """Return the connection"""
@@ -251,12 +254,20 @@ class Twitter:
 # ----------------------------------- MAIN --------------------------------------
 
 def main():
-    # Log in/sign up user into database
-    twitter = Twitter()
-    conn = twitter.get_conn()
+    # Get Oracle username and password
+    oracle_user = input("Enter Oracle username: ")
+    oracle_pass = input("Enter Oracle password: ")
+    connection = get_connection(username=oracle_user, password=oracle_pass)
 
-    # Log out of the database system
-    session.logout()
+    if connection is None:
+        sys.exit()
+
+    # Log in/sign up user into database
+    twitter = Twitter(connection)
+    twitter.start_up()
+    
+    # Exit out of the database system
+    twitter.exit()
 
 if __name__ == "__main__":
     main()

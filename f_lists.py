@@ -125,8 +125,6 @@ def add_lmember(session, username, curs, con, manage_lists):
         if (member_exists(curs,lname,member) or not user_exists(curs,member)):
             print("The user already exists in this list or the user does not exist!")
             press_enter(session)
-        elif(member==username):
-            print("You cannot put yourself in your list.")
         else:
             prompt = "You want to add member "+str(member)+"? y/n: "
             if answer_check(prompt) :

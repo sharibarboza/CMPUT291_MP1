@@ -112,6 +112,11 @@ def find_user(curs, username, password):
     user = curs.fetchone()
     pwd = user[1].rstrip()
     
+    if user is None:
+        return None
+    else:
+        pwd = user[1].rstrip()
+    
     if password == pwd:
         return user
     else:
