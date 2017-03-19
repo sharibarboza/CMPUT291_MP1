@@ -122,9 +122,13 @@ class Tweet:
         """Return the tweet writer"""
         return self.writer
 
-    def replyer(self):
-        """Return the replyto user"""
+    def reply_tweet(self):
+        """Return the replyto tweet id"""
         return self.replyto
+
+    def replyer(self):
+        """Return the replyto user id"""
+        return self.reply_user
 
     def retweeter(self):
         """Return the id of retweeter"""
