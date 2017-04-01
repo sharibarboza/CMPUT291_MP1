@@ -171,24 +171,31 @@ class Tweet:
         else:
             tweet_index = "%s %d" % (result, self.id)
 
+        # Set up formatting variables
         col1_width = len(tweet_index) + 1
-        col2_width = BORDER_LEN - col1_width - 3 
-        date_line = "%s" % (self.date_str)
-        date_user = "%s @%d - %s" % (self.writer_name, self.writer, date_line)
-        blank = " " * col1_width
-       
+        col2_width = BORDER_LEN - col1_width - 3
+        blank = " " * col1_width 
+      
+        # Add reply user id at beginning of text 
         if self.replyto is not None:
             text_str = "@%s %s" % (self.reply_user, self.text)
         else:
             text_str = self.text
-        text1, text2 = self.split_text(text_str, max_width=width)
 
+        text1, text2 = self.split_text(text_str, max_width=width)
+        date_line = "%s" % (self.date_str)
+        info = "%s @%d - %s" % (self.writer_name, self.writer, date_line)
+ 
+        # Format column 1 for tweet numbers
         line1_1 = "{:{width}}".format(tweet_index, width=col1_width)
-        line1_2 = "  {:{width}}".format(date_user, width=col2_width)
+
+        # Format lines for display tweet
+        line1_2 = "  {:{width}}".format(info, width=col2_width)
         line2_2 = "  {:{width}}".format(text1, width=col2_width)
         line3_2 = "  {:{width}}".format(text2, width=col2_width)
         line4_2 = "  {:{width}}".format(" ", width=col2_width)
 
+        # Adjust lines if tweet is a retweet
         if rt_user is not None:
             user_name = get_name(self.curs, rt_user)
             retweeted = "%s Retweeted" % user_name
@@ -197,9 +204,9 @@ class Tweet:
             line2_2 = line1_2
             line1_2 = "  {:{width}}".format(retweeted, width=col2_width)
 
+        # Print to the console
         print_string(line1_1 + line1_2)
         print_string(blank + line2_2)
-        
         if line3_2[2] != " ": 
             print_string(blank + line3_2)
         if line4_2[2] != " ":
@@ -234,27 +241,31 @@ class Tweet:
         return (text1, text2)
 
     def display_stats(self):
-        """ Displays statistics on a tweet after a tweet has been selected"""
+        """ Displays statistics on a tweet after the tweet has been selected
+        From here, the user can decide to reply/retweet the tweet.
+        """
         print_newline() 
         print_border(thick=True)
         print_string("Tweet Statistics".upper())
         print_border(thick=True, sign='|')
 
+        # Print tweet text first
         text1, text2 = self.split_text(self.text, max_width=75)
         print_string(text1)
         if len(text2) > 1: 
             print_string(text2)
         print_newline(no_border=False)
 
+        # Tweet stats
+        self.rep_cnt = get_rep_cnt(self.curs, self.id)
+        self.ret_cnt = get_ret_cnt(self.curs, self.id)
         print_string("Tweet ID: %d" % (self.id))
         print_string("Written by: %s @%d" % (self.writer_name, self.writer)) 
         print_string("Posted: %s" % (self.date_str))
-
-        self.rep_cnt = get_rep_cnt(self.curs, self.id)
-        self.ret_cnt = get_ret_cnt(self.curs, self.id)
         print_string("Number of replies: %s" % (self.rep_cnt))
         print_string("Number of retweets: %s" % (self.ret_cnt))
- 
+
+        # Display what the tweet is replying to 
         if (self.replyto):
             rep_str = "%s @%d - %s" % (self.reply_name, self.reply_user, self.reply_text)
             text1, text2 = self.split_text(rep_str)
@@ -263,6 +274,8 @@ class Tweet:
                 print_string(text2)
         else:
             print_string("In reply to: None")
+
+        # Display menu to follow, etc. 
         choices = self.tweet_menu()
         choice = validate_num(SELECT, self.session, self.session.home, size=len(choices))
         return choices[choice-1]
